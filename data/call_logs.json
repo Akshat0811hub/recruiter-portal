@@ -1,0 +1,53 @@
+[
+  {
+    "id": "CALL-61695157",
+    "dateKey": "2026-11-06",
+    "recruiterName": "Suhani",
+    "recruiterPhone": "",
+    "candidateName": "Candidate (5114)",
+    "candidatePhone": "9599535114",
+    "direction": "incoming",
+    "callStartTime": "2026-11-06 16:11:13",
+    "callEndTime": "2026-11-06 16:11:35",
+    "callStartDisplay": "06 Nov 2026, 04:11:13 PM",
+    "callEndDisplay": "06 Nov 2026, 04:11:35 PM",
+    "durationSeconds": 21,
+    "durationFormatted": "21s",
+    "notes": "",
+    "loggedAt": "2026-11-06 16:11:35"
+  },
+  {
+    "id": "CALL-61526864",
+    "dateKey": "2026-11-06",
+    "recruiterName": "Suhani",
+    "recruiterPhone": "",
+    "candidateName": "Candidate (5114)",
+    "candidatePhone": "9599535114",
+    "direction": "incoming",
+    "callStartTime": "2026-11-06 16:08:28",
+    "callEndTime": "2026-11-06 16:08:46",
+    "callStartDisplay": "06 Nov 2026, 04:08:28 PM",
+    "callEndDisplay": "06 Nov 2026, 04:08:46 PM",
+    "durationSeconds": 19,
+    "durationFormatted": "19s",
+    "notes": "",
+    "loggedAt": "2026-11-06 16:08:46"
+  },
+  {
+    "id": "CALL-61485488",
+    "dateKey": "2026-11-06",
+    "recruiterName": "Suhani",
+    "recruiterPhone": "",
+    "candidateName": "Candidate (5114)",
+    "candidatePhone": "9599535114",
+    "direction": "incoming",
+    "callStartTime": "2026-11-06 16:07:38",
+    "callEndTime": "2026-11-06 16:08:05",
+    "callStartDisplay": "06 Nov 2026, 04:07:38 PM",
+    "callEndDisplay": "06 Nov 2026, 04:08:05 PM",
+    "durationSeconds": 27,
+    "durationFormatted": "27s",
+    "notes": "",
+    "loggedAt": "2026-11-06 16:08:05"
+  }
+]

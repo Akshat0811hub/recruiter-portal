@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment / local runtime caches
+.env
+.env.local
+*.log
+npm-debug.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Data backups and local sync cursors
+data/backups/
+data/cloud_sync_cursor.json
+*.tmp

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "USR-001",
+    "username": "admin",
+    "password": "admin@123",
+    "name": "Super Admin",
+    "role": "admin",
+    "email": "admin@company.com"
+  },
+  {
+    "id": "USR-002",
+    "username": "tl",
+    "password": "tl@123",
+    "name": "Team Leader (Vikram)",
+    "role": "team_leader",
+    "email": "tl@company.com"
+  },
+  {
+    "id": "USR-101",
+    "username": "suhani",
+    "password": "suhani@123",
+    "name": "Suhani",
+    "role": "recruiter",
+    "email": "suhani@company.com"
+  },
+  {
+    "id": "USR-102",
+    "username": "rahul",
+    "password": "rahul@123",
+    "name": "Rahul",
+    "role": "recruiter",
+    "email": "rahul@company.com"
+  },
+  {
+    "id": "USR-103",
+    "username": "pooja",
+    "password": "pooja@123",
+    "name": "Pooja",
+    "role": "recruiter",
+    "email": "pooja@company.com"
+  },
+  {
+    "id": "USR-104",
+    "username": "amit",
+    "password": "amit@123",
+    "name": "Amit",
+    "role": "recruiter",
+    "email": "amit@company.com"
+  },
+  {
+    "id": "USR-105",
+    "username": "neha",
+    "password": "neha@123",
+    "name": "Neha",
+    "role": "recruiter",
+    "email": "neha@company.com"
+  },
+  {
+    "id": "USR-106",
+    "username": "vikram_rec",
+    "password": "vikram@123",
+    "name": "Vikram",
+    "role": "recruiter",
+    "email": "vikram@company.com"
+  },
+  {
+    "id": "USR-107",
+    "username": "anjali",
+    "password": "anjali@123",
+    "name": "Anjali",
+    "role": "recruiter",
+    "email": "anjali@company.com"
+  },
+  {
+    "id": "USR-108",
+    "username": "rohan",
+    "password": "rohan@123",
+    "name": "Rohan",
+    "role": "recruiter",
+    "email": "rohan@company.com"
+  },
+  {
+    "id": "USR-109",
+    "username": "kavita",
+    "password": "kavita@123",
+    "name": "Kavita",
+    "role": "recruiter",
+    "email": "kavita@company.com"
+  },
+  {
+    "id": "USR-110",
+    "username": "deepak",
+    "password": "deepak@123",
+    "name": "Deepak",
+    "role": "recruiter",
+    "email": "deepak@company.com"
+  }
+]

@@ -1,0 +1,53 @@
+/* TalentFlow CRM Extension — Subtle Non-Intrusive Toast & Gmail Status Pill */
+
+.wa-crm-toast {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  transform: translateY(20px) !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 10px 16px !important;
+  border-radius: 9px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25) !important;
+  z-index: 2147483647 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.wa-crm-toast-visible {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+}
+
+.wa-crm-toast-success {
+  border-left: 3px solid #10b981 !important;
+}
+
+.wa-crm-toast-error {
+  border-left: 3px solid #ef4444 !important;
+}
+
+.wa-crm-toast-info {
+  border-left: 3px solid #6366f1 !important;
+}
+
+.crm-gmail-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  background: #eef2ff !important;
+  color: #4f46e5 !important;
+  border: 1px solid #c7d2fe !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  padding: 1px 6px !important;
+  margin-left: 8px !important;
+  vertical-align: middle !important;
+  line-height: 14px !important;
+}
