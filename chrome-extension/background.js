@@ -303,22 +303,56 @@ async function postLeadDirect(webhookUrl, payload, allowQueueOnFail = true) {
   }
 }
 
-// Background Alarms: Keep connection warm, sync known leads, and flush offline queue every 1 minute
+function wakeSyncTabs() {
+  try {
+    if (!chrome?.tabs?.query) return;
+    chrome.tabs.query({ url: ["https://web.whatsapp.com/*", "https://mail.google.com/*"] }, (tabs) => {
+      if (Array.isArray(tabs)) {
+        tabs.forEach(t => {
+          if (t && t.id) {
+            chrome.tabs.sendMessage(t.id, { action: "TRIGGER_SYNC_SCAN" }).catch(() => {});
+          }
+        });
+      }
+    });
+  } catch (e) {}
+}
+
+// Background Alarms: Keep connection warm, sync known leads, flush offline queue, and wake tabs every 1 minute
 try {
   chrome.alarms.create("CRM_HEARTBEAT", { periodInMinutes: 1 });
   chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === "CRM_HEARTBEAT") {
-      autoCatchServerUrl().then(() => flushPendingQueue());
+      autoCatchServerUrl().then(() => {
+        flushPendingQueue();
+        wakeSyncTabs();
+      });
     }
   });
 } catch (e) {}
 
 // Startup hook
-autoCatchServerUrl().then(() => flushPendingQueue());
+autoCatchServerUrl().then(() => {
+  flushPendingQueue();
+  setTimeout(wakeSyncTabs, 2000);
+});
 
 // Message Dispatcher
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (!request || !request.action) return false;
+
+  if (request.action === "TEST_VERIFY") {
+    autoCatchServerUrl(request.url)
+      .then(async (res) => {
+        if (res && res.success) {
+          await flushPendingQueue();
+          wakeSyncTabs();
+        }
+        sendResponse(res);
+      })
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
+  }
 
   if (request.action === "SYNC_LEAD") {
     postLeadDirect(request.webhookUrl, request.payload, true)

@@ -383,10 +383,10 @@ function scanSidebarChats() {
     const rawRowText = (row.innerText || "").trim();
     if (!rawRowText) return;
 
-    // Only auto-trigger sidebar preview if row shows a TODAY clock time (e.g. "2:35 pm" or "14:35") or unread badge
+    // Auto-trigger sidebar preview for unread chats, today's chats, or recent candidate chats (past 14 days)
     const hasTodayTime = /\b\d{1,2}:\d{2}\s*(?:am|pm)?\b/i.test(rawRowText);
     const hasUnread = !!row.querySelector("span[aria-label*='unread']");
-    if (!hasTodayTime && !hasUnread) return;
+    const hasRecentDate = /(?:yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/i.test(rawRowText);
 
     const lower = rawRowText.toLowerCase();
     const titleEl = row.querySelector("span[title], span[dir='auto']");
@@ -411,7 +411,12 @@ function scanSidebarChats() {
 
     const isKnown = pKey && knownCrmPhones.has(pKey);
     const hasKeyword = KEYWORDS.some(k => lower.includes(k));
+
+    // Must match candidate keywords or be an existing candidate in CRM
     if (!hasKeyword && !isKnown) return;
+
+    // If laptop was off for 10 days, allow catchup of unread, today, or recent date chats
+    if (!hasTodayTime && !hasUnread && !hasRecentDate && !isKnown) return;
 
     // Clean WhatsApp sidebar UI noise ("2 unread messages", timestamps, etc.)
     const cleanLines = rawRowText
@@ -479,9 +484,9 @@ function dispatchLead(candidateName, candidatePhone, fullTranscriptText, isIniti
           if (pKey) knownCrmPhones.add(pKey);
           const displayTarget = finalName || candidatePhone;
           if (isInitial || action === "created") {
-            showToast(`Synced to CRM · ${displayTarget}`, "success");
+            showToast("Synced to CRM", "success");
           } else {
-            showToast(`Conversation updated · ${displayTarget}`, "info");
+            showToast("Conversation updated", "info");
           }
         }
       }
@@ -502,7 +507,17 @@ function showToast(message, type = "info") {
   clearTimeout(toast._hideTimer);
   toast._hideTimer = setTimeout(() => {
     toast.className = toast.className.replace("wa-crm-toast-visible", "").trim();
-  }, 3200);
+  }, 2200);
+}
+
+// Background wake-up signal listener (for 10-day catchup & periodic sync)
+if (chrome?.runtime?.onMessage) {
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg && msg.action === "TRIGGER_SYNC_SCAN") {
+      scanSidebarChats();
+      scanActiveChatContinuous();
+    }
+  });
 }
 
 // Instant trigger when Recruiter sends a WhatsApp message (Enter key or Send button)

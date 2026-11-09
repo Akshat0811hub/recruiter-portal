@@ -349,11 +349,10 @@ function scanInboxRows() {
   if (!rows || rows.length === 0) return;
 
   rows.forEach(row => {
-    // Only auto-capture unread rows or rows showing today's clock time (e.g. "2:15 PM" / "14:15")
+    // Capture unread emails, today's emails, or any recent inbox emails matching recruitment keywords/known candidates
     const isUnread = row.classList.contains("zE");
     const timeCol = row.querySelector("td.xW span")?.innerText || "";
     const isTodayRow = /\d{1,2}:\d{2}/.test(timeCol);
-    if (!isUnread && !isTodayRow) return;
 
     const rowText = (row.innerText || "").toLowerCase();
     const senderEl = row.querySelector("span.bA4 span[email], span[email]");
@@ -362,7 +361,14 @@ function scanInboxRows() {
 
     const hasKeyword = KEYWORDS.some(k => rowText.includes(k));
     const isKnown = knownCrmEmails.has(email);
+
+    // If laptop was off for 10 days, capture unread or any candidate email in the recent inbox
     if (!hasKeyword && !isKnown) return;
+    if (!isUnread && !isTodayRow && !isKnown) {
+      // Must have strong recruitment keyword if already marked read from past days
+      const strongKeyword = ["resume", "cv", "job", "apply", "applied", "interview", "ctc", "hiring"].some(k => rowText.includes(k));
+      if (!strongKeyword) return;
+    }
 
     const rawName = senderEl ? (senderEl.getAttribute("name") || senderEl.innerText || "").trim() : "";
     const subjectEl = row.querySelector("span.bqe, span.bog");
@@ -427,9 +433,9 @@ function dispatchEmailLead({ candidateName, candidateEmail, candidatePhone, subj
           if (action === "unchanged" || action === "ignored") return;
           knownCrmEmails.add(candidateEmail);
           if (isInitial || action === "created") {
-            showToast(`Email synced · ${candidateName}`, "success");
+            showToast("Email synced to CRM", "success");
           } else {
-            showToast(`Thread updated · ${candidateName}`, "info");
+            showToast("Thread updated in CRM", "info");
           }
         }
       }
@@ -450,7 +456,17 @@ function showToast(message, type = "info") {
   clearTimeout(toast._hideTimer);
   toast._hideTimer = setTimeout(() => {
     toast.className = toast.className.replace("wa-crm-toast-visible", "").trim();
-  }, 3200);
+  }, 2400);
+}
+
+// Background wake-up signal listener (for 10-day catchup & periodic sync)
+if (chrome?.runtime?.onMessage) {
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg && msg.action === "TRIGGER_SYNC_SCAN") {
+      scanInboxRows();
+      scanActiveEmailThread();
+    }
+  });
 }
 
 // Instant trigger when Recruiter sends an email reply
