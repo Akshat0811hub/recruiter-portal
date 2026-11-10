@@ -230,7 +230,10 @@ const NON_NAME_WORDS = new Set([
   'please', 'plz', 'kindly', 'help', 'resume', 'cv', 'curriculum', 'vitae', 'profile', 'updated',
   'professional', 'page', 'pages', 'final', 'latest', 'pdf', 'doc', 'docx', 'regarding',
   'hiring', 'software', 'frontend', 'backend', 'fullstack', 'react', 'java', 'python', 'node',
-  'ui', 'ux', 'qa', 'support', 'admin', 'account', 'accounts', 'orbitouch', 'outsourcing'
+  'ui', 'ux', 'qa', 'support', 'admin', 'account', 'accounts', 'orbitouch', 'outsourcing',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'today', 'yesterday',
+  'suhani', 'sisodiya', 'pooja', 'jyoti', 'akshay', 'munisha', 'sakshi', 'akshita', 'divanshi',
+  'gunjan', 'kamakshi', 'manshi', 'shriparna', 'neetu', 'kajal'
 ]);
 
 const INTERNAL_GROUP_PATTERNS = [
@@ -241,10 +244,176 @@ const INTERNAL_GROUP_PATTERNS = [
   /team\s+(?:kajal|neetu|suhani|rahul)/i
 ];
 
+function canonicalRecruiterName(input, recruiterEmail = '') {
+  const cleanEmail = sanitizeEmail(recruiterEmail || '');
+  const recruiters = getRecruiters();
+  if (cleanEmail) {
+    const byEmail = recruiters.find(r => sanitizeEmail(r.email || '') === cleanEmail);
+    if (byEmail && byEmail.name) {
+      return byEmail.name.replace(/\s*\(Alt\)$/i, '').trim();
+    }
+    const users = getUsers();
+    const userByEmail = users.find(u => sanitizeEmail(u.email || '') === cleanEmail);
+    if (userByEmail && userByEmail.name) {
+      return userByEmail.name.replace(/\s*\(Alt\)$/i, '').trim();
+    }
+  }
+  // Strip any ampersands, punctuation, or trailing symbols e.g. "Jyoti&&" -> "Jyoti", "Sakshi&" -> "Sakshi", "Divyanshi &" -> "Divyanshi"
+  const clean = String(input || '')
+    .replace(/[&_#*~`^%$@!|;]+/g, ' ')
+    .replace(/\+/g, ' ')
+    .replace(/\s*\(Alt\)$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!clean) return 'Suhani Sisodiya';
+
+  const lower = clean.toLowerCase();
+  const inputFirst = lower.split(/\s+/)[0];
+
+  // Common aliases & phonetic variations
+  if (lower === 'divyanshi' || inputFirst === 'divyanshi') return 'Divanshi Gupta';
+
+  for (const r of recruiters) {
+    const rName = (r.name || '').replace(/\s*\(Alt\)$/i, '').trim();
+    const rLower = rName.toLowerCase();
+    const firstWord = rLower.split(/\s+/)[0];
+    if (
+      rLower === lower ||
+      lower === firstWord ||
+      inputFirst === firstWord ||
+      lower.startsWith(firstWord + ' ') ||
+      rLower.startsWith(lower + ' ')
+    ) {
+      return rName;
+    }
+  }
+  return clean;
+}
+
+function isRecruiterOrSystemEmail(email) {
+  const e = sanitizeEmail(email || '');
+  if (!e) return true;
+  if (e.endsWith('@orbitouch-hr.com')) return true;
+  if (/^(?:no-?reply|updates-noreply|messages-noreply|donotreply|notifications|mailer-daemon|naukritalentcloud|alerts|info|marketing|newsletter|support|career|careers|talent)@/i.test(e)) return true;
+  if (/@(?:naukri\.com|linkedin\.com|shine\.com|indeed\.com|foundit\.in|apna\.co|workindia\.in|intellohire\.com|cxolanes\.in|jwalix\.com|masaischool\.com|google\.com)$/i.test(e)) return true;
+  return false;
+}
+
+function detectRecruiterInText(text) {
+  if (!text) return '';
+  const m =
+    String(text).match(/(?:this\s+side|this\s+is|i\s+am|myself)\s+(pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu)\b/i) ||
+    String(text).match(/(?:regards|thanks\s*(?:&|and)?\s*regards)[\s,:-]+(pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu)\b/i) ||
+    String(text).match(/\b(pooja|jyoti\.shah|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu(?:\.sharma)?)@orbitouch-hr\.com/i);
+  if (m && m[1]) {
+    const key = m[1].toLowerCase().replace('.shah', '').replace('.sharma', '');
+    return canonicalRecruiterName(key);
+  }
+  return '';
+}
+
+function isRecruiterOutreachText(text) {
+  if (!text) return false;
+  const s = String(text).trim();
+  return (
+    /orbitouch/i.test(s) ||
+    /(?:this\s+side|this\s+is|i\s+am|myself)\s+(?:pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu)\b/i.test(s) ||
+    /(?:this\s+side|this\s+is|i\s+am|myself)\s+[a-z]+\s*\(\s*hr\s*\)/i.test(s) ||
+    /got\s+your\s+(?:profile|resume|cv|number|contact|reference)\s+from\s+(?:naukri|shine|linkedin|indeed|apna|workindia|foundit|monster|portal)/i.test(s) ||
+    /\bwe\s+are\s+hiring\s+for\b/i.test(s) ||
+    /\blet\s+me\s+know\s+if\s+you\s+are\s+(?:looking\s+for\s+(?:a\s+)?job\s+change|interested)/i.test(s) ||
+    /\bas\s+per\s+our\s+(?:telephonic\s+conversation|discussion\s+on\s+call|conversation)/i.test(s) ||
+    /\bshared\s+a\s+job\s+description\b/i.test(s) ||
+    /\bplease\s+go\s+through\s+it\s+and\s+revert\b/i.test(s) ||
+    /\brevert\s+(?:me\s+)?back\s+(?:along\s+)?with\s+your\s+updated\s+(?:resume|cv)\b/i.test(s) ||
+    /\binterview\s+has\s+been\s+scheduled\b/i.test(s) ||
+    /\bkindly\s+share\s+your\s+(?:updated\s+)?(?:resume|cv|current\s+ctc)\b/i.test(s) ||
+    /(?:regards|thanks\s*(?:&|and)?\s*regards)[\s,:-]+(?:pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu)\b/i.test(s)
+  );
+}
+
+function normalizeTranscriptSpeakers(transcript, defaultRecruiter = 'Suhani Sisodiya') {
+  if (!transcript) return '';
+  const raw = String(transcript).replace(/\r\n/g, '\n').trim();
+  const blocks = [];
+  const lines = raw.split('\n');
+
+  for (const line of lines) {
+    const headerMatch = line.match(/^\[([^\]]+)\]:\s*(.*)$/);
+    if (headerMatch) {
+      blocks.push({
+        rawHeader: headerMatch[1].trim(),
+        body: headerMatch[2]
+      });
+    } else if (blocks.length > 0) {
+      blocks[blocks.length - 1].body += '\n' + line;
+    } else {
+      blocks.push({
+        rawHeader: '',
+        body: line
+      });
+    }
+  }
+
+  let recName = canonicalRecruiterName(defaultRecruiter);
+  for (const b of blocks) {
+    const det = detectRecruiterInText(b.body);
+    if (det) {
+      recName = det;
+      break;
+    }
+  }
+
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i];
+    if (!b.rawHeader) continue;
+    const timeMatch = b.rawHeader.match(/\(([^)]+)\)\s*$/);
+    const timePart = timeMatch ? ` (${timeMatch[1].trim()})` : '';
+    const det = detectRecruiterInText(b.body);
+    const activeRec = det || recName;
+
+    if (/^Recruiter/i.test(b.rawHeader)) {
+      b.rawHeader = `Recruiter - ${activeRec}${timePart}`;
+    } else if (isRecruiterOutreachText(b.body)) {
+      b.rawHeader = `Recruiter - ${activeRec}${timePart}`;
+    }
+  }
+
+  // Greeting Adjacency Pass: if a block is "Hii\n\n<Candidate Name>" right before a Recruiter block (or same timestamp),
+  // rewrite its header to Recruiter as well!
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i];
+    if (!/^Candidate/i.test(b.rawHeader)) continue;
+    const cleanBody = b.body.trim();
+    const isShortGreeting = /^(?:h+i+|hello|hey|dear|good\s+(?:morning|afternoon|evening))[,!\s\n]+([A-Za-z]{2,}(?:\s+[A-Za-z]{2,}){0,3})[?.,!\s]*$/i.test(cleanBody);
+    const nextBlock = blocks[i + 1];
+    if (isShortGreeting && nextBlock && /^Recruiter/i.test(nextBlock.rawHeader)) {
+      const timeMatch = b.rawHeader.match(/\(([^)]+)\)\s*$/);
+      const timePart = timeMatch ? ` (${timeMatch[1].trim()})` : '';
+      b.rawHeader = `Recruiter - ${recName}${timePart}`;
+    }
+  }
+
+  return blocks
+    .map(b => (b.rawHeader ? `[${b.rawHeader}]: ${b.body}` : b.body))
+    .join('\n');
+}
+
+function extractValidCandidateEmail(explicitEmail, text) {
+  const direct = sanitizeEmail(explicitEmail || '');
+  if (direct && !isRecruiterOrSystemEmail(direct)) return direct;
+  const matches = String(text || '').match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+  for (const m of matches) {
+    const clean = sanitizeEmail(m);
+    if (clean && !isRecruiterOrSystemEmail(clean)) return clean;
+  }
+  return '';
+}
+
 function isInternalGroup(title, text) {
-  const combined = `${title || ''} ${text || ''}`;
-  if (INTERNAL_GROUP_PATTERNS.some(rx => rx.test(title || ''))) return true;
-  if ((title || '').toLowerCase().includes('orbitouch') && !(title || '').match(/\d{8,}/)) return true;
+  const t = (title || '').toLowerCase().trim();
+  if (INTERNAL_GROUP_PATTERNS.some(rx => rx.test(t))) return true;
+  if (/orbitouch\s*(?:outsourcing|team|reporting|agency|internal|management)/i.test(t)) return true;
   return false;
 }
 
@@ -271,6 +440,17 @@ function cleanPersonName(rawCandidate) {
 
 function extractCandidateName(text) {
   if (!text) return '';
+
+  // 0. Extract Candidate Name when Recruiter greets Candidate by full name (e.g. "Hii\n\nPrashant Ravindra Chaudhari")
+  const greetingMatches = [
+    ...String(text).matchAll(/(?:^|\n)(?:\[(?:Recruiter|Candidate)[^\]]*\]:\s*)?(?:h+i+|hello|hey|dear)[,!\s]+(?:\n+\s*)?([A-Za-z]{3,}(?:[ \t]+[A-Za-z]{2,}){1,2})\s*(?:\n|$)/gi)
+  ];
+  for (const gm of greetingMatches) {
+    if (gm && gm[1]) {
+      const cleaned = cleanPersonName(gm[1]);
+      if (cleaned && cleaned.split(' ').length >= 2) return cleaned;
+    }
+  }
 
   // 1. Explicit self-introductions or structured "Name: ..."
   const patterns = [
@@ -309,7 +489,9 @@ const COMMON_SKILLS = [
   'Machine Learning', 'Power BI', 'SAP', 'Salesforce', 'Figma', 'UI/UX', 'UI Developer',
   'Frontend', 'Backend', 'Full Stack', 'QA', 'Selenium', 'Manual Testing', 'Sales',
   'Business Development', 'Telecaller', 'BPO', 'Customer Support', 'HR', 'Talent Acquisition',
-  'Digital Marketing', 'SEO', 'Accounts', 'Tally', 'Finance', 'Operations', 'Admin Executive'
+  'Digital Marketing', 'SEO', 'Accounts', 'Tally', 'Finance', 'Operations', 'Admin Executive',
+  'Regulatory Affairs', 'Quality Assurance', 'Quality Control', 'Pharmacovigilance', 'Production',
+  'Mechanical', 'Electrical', 'Civil'
 ];
 
 function extractSkills(text) {
@@ -326,24 +508,29 @@ function extractSkills(text) {
 
 function extractCurrentCtc(text) {
   if (!text) return '';
-  const m = text.match(/(?:current\s*(?:ctc|salary|pkg|package)?|cctc|drawing|present\s*(?:ctc|salary))\s*(?:is|around|of)?\s*[:=-]?\s*(\d+(?:\.\d+)?\s*(?:lpa|lakhs?|lac|k|pm|per\s*month)?)/i);
-  return m ? m[1].trim() : '';
+  const all = [
+    ...String(text).matchAll(/(?:current\s*(?:ctc|salary|pkg|package)?|cctc|drawing|present\s*(?:ctc|salary))\s*(?:is|around|of)?\s*[:=-]?\s*(\d+(?:\.\d+)?\s*(?:lpa|lakhs?|lac|k|pm|per\s*month)?)/gi),
+    ...String(text).matchAll(/(?:^|\n|\b)(?<!expected\s)(?<!exp\s)ctc\s*(?:is|around|of)?\s*[:=-]?\s*(\d+(?:\.\d+)?\s*(?:lpa|lakhs?|lac|k|pm|per\s*month)?)/gi)
+  ];
+  return all.length > 0 ? all[all.length - 1][1].trim() : '';
 }
 
 function extractExpectedCtc(text) {
   if (!text) return '';
-  const m = text.match(/(?:expected\s*(?:ctc|salary|pkg|package)?|ectc|ext\b|exp\s*ctc|expecting)\s*(?:is|around|of)?\s*[:=-]?\s*(\d+(?:\.\d+)?\s*(?:lpa|lakhs?|lac|k|pm|per\s*month)?)/i);
-  return m ? m[1].trim() : '';
+  const all = [
+    ...String(text).matchAll(/(?:expected\s*(?:ctc|salary|pkg|package)?|ectc|ext\b|exp\s*ctc|expecting)\s*(?:is|around|of)?\s*[:=-]?\s*(\d+(?:\.\d+)?\s*(?:lpa|lakhs?|lac|k|pm|per\s*month)?)/gi)
+  ];
+  return all.length > 0 ? all[all.length - 1][1].trim() : '';
 }
 
 function extractNoticePeriod(text) {
   if (!text) return '';
-  let m = text.match(/(?:notice\s*(?:period)?|np)\s*(?:is|of)?\s*[:=-]?\s*(\d+\s*(?:days?|months?|weeks?)|immediate(?:\s*joiner)?|serving(?:\s*notice)?)/i);
-  if (m) return m[1].trim();
-  m = text.match(/(\d+\s*(?:days?|months?|weeks?))\s*notice/i);
-  if (m) return m[1].trim();
-  m = text.match(/\b(immediate\s*joiner|serving\s*notice)\b/i);
-  return m ? m[1].trim() : '';
+  const all = [
+    ...String(text).matchAll(/(?:notice\s*(?:period)?|np)\s*(?:is|of)?\s*[:=-]?\s*(\d+\s*(?:days?|months?|weeks?)|immediate(?:\s*joiner)?|serving(?:\s*notice)?)/gi),
+    ...String(text).matchAll(/(\d+\s*(?:days?|months?|weeks?))\s*notice/gi),
+    ...String(text).matchAll(/\b(immediate\s*joiner|serving\s*notice)\b/gi)
+  ];
+  return all.length > 0 ? all[all.length - 1][1].trim() : '';
 }
 
 function classifyLead(text, explicitCategory) {
@@ -356,7 +543,7 @@ function classifyLead(text, explicitCategory) {
   const rules = [
     {
       category: 'Client / Employer Lead',
-      keywords: ['need staff', 'requirement', 'service agreement', 'commission', 'mandate', 'vendor', 'commercials', 'replacement clause', 'hiring partner']
+      keywords: ['need staff', 'service agreement', 'commission', 'commercials', 'replacement clause', 'hiring partner', 'recruitment agency']
     },
     {
       category: 'Experienced / Job Change',
@@ -402,17 +589,23 @@ function parseFlexiblePayload(rawText) {
         const key = matches[i][1].trim();
         const valStart = matches[i].index + matches[i][0].length;
         const valEnd = i + 1 < matches.length ? matches[i + 1].index : normalized.length;
-        let rawVal = normalized.slice(valStart, valEnd).trim();
+        let rawVal = normalized.slice(valStart, valEnd);
+        // Clean leading & trailing delimiter ampersands and whitespace from values
+        rawVal = rawVal.replace(/^[\s&]+|[\s&]+$/g, '').trim();
         try {
           rawVal = decodeURIComponent(rawVal.replace(/\+(\d)/g, '%2B$1'));
         } catch (_) {}
-        obj[key] = rawVal.trim();
+        obj[key] = rawVal.replace(/^[\s&]+|[\s&]+$/g, '').trim();
       }
       return obj;
     }
     const safeRaw = normalized.replace(/\+(\d)/g, '%2B$1');
     const params = new URLSearchParams(safeRaw);
-    for (const [k, v] of params.entries()) obj[k.trim()] = v.trim();
+    for (const [k, v] of params.entries()) {
+      const cleanK = k.replace(/^[\s&]+|[\s&]+$/g, '').trim();
+      const cleanV = v.replace(/^[\s&]+|[\s&]+$/g, '').trim();
+      if (cleanK) obj[cleanK] = cleanV;
+    }
     return obj;
   }
 }
@@ -499,9 +692,29 @@ function mergeChatTranscript(existingTranscript, incomingTranscript, isPreview =
   if (!cleanExisting) return { merged: cleanIncoming, changed: true };
   if (cleanIncoming === cleanExisting) return { merged: cleanExisting, changed: false };
 
-  // Never let a short sidebar/inbox preview overwrite an existing conversation
+  const oldLines = cleanExisting.split('\n').map(l => l.trim()).filter(Boolean);
+  const newLines = cleanIncoming.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // If incoming is a sidebar/inbox preview, never overwrite full conversation,
+  // but DO append if the preview is not already present in existing!
   if (isPreview) {
-    return { merged: cleanExisting, changed: false };
+    const corePreview = cleanIncoming
+      .replace(/^Subject:\s*[^\n]+\n-+\n/i, '')
+      .replace(/^\[[^\]]+\]:\s*/i, '')
+      .trim();
+    if (!corePreview) return { merged: cleanExisting, changed: false };
+    const lowerCore = corePreview.toLowerCase();
+    const alreadyExists =
+      cleanExisting.toLowerCase().includes(lowerCore) ||
+      oldLines.some(l => l.replace(/^\[[^\]]+\]:\s*/i, '').trim().toLowerCase() === lowerCore);
+    if (alreadyExists) {
+      return { merged: cleanExisting, changed: false };
+    }
+    const appendLine = cleanIncoming.replace(/^Subject:\s*[^\n]+\n-+\n/i, '').trim();
+    return {
+      merged: cleanExisting + '\n' + appendLine,
+      changed: true
+    };
   }
 
   // If incoming contains the entire existing transcript, incoming is strictly newer/fuller
@@ -509,20 +722,29 @@ function mergeChatTranscript(existingTranscript, incomingTranscript, isPreview =
     return { merged: cleanIncoming, changed: true };
   }
 
-  // If existing already contains incoming (e.g. partial view), keep existing unchanged
-  if (cleanExisting.includes(cleanIncoming)) {
-    return { merged: cleanExisting, changed: false };
+  // For full open chat transcripts: if incoming has at least as many lines as existing, or if first line of incoming
+  // matches a point in existing, preserve scrolled-out prefix and replace suffix with full live incoming!
+  if (newLines.length > 0) {
+    const firstNewBody = newLines[0].replace(/^\[[^\]]+\]:\s*/i, '').trim().toLowerCase();
+    const matchIdx = oldLines.findIndex(
+      l => l.replace(/^\[[^\]]+\]:\s*/i, '').trim().toLowerCase() === firstNewBody
+    );
+    if (matchIdx !== -1) {
+      const combined = oldLines.slice(0, matchIdx).concat(newLines).join('\n');
+      return {
+        merged: combined,
+        changed: combined !== cleanExisting
+      };
+    }
+    if (newLines.length >= oldLines.length) {
+      return {
+        merged: cleanIncoming,
+        changed: cleanIncoming !== cleanExisting
+      };
+    }
   }
 
   // Overlap merge: find longest suffix of existing lines matching prefix of incoming lines
-  const oldLines = cleanExisting.split('\n').map(l => l.trim()).filter(Boolean);
-  const newLines = cleanIncoming.split('\n').map(l => l.trim()).filter(Boolean);
-
-  // If previous was just a 1-2 line sidebar preview, replace with full open chat transcript
-  if (oldLines.length <= 2 && newLines.length >= 2) {
-    return { merged: cleanIncoming, changed: true };
-  }
-
   let overlapCount = 0;
   const maxOverlap = Math.min(oldLines.length, newLines.length);
   for (let k = maxOverlap; k >= 1; k--) {
@@ -548,16 +770,17 @@ function mergeChatTranscript(existingTranscript, incomingTranscript, isPreview =
     };
   }
 
-  // Check if the last line of incoming is genuinely not in existing
-  const unseenLines = newLines.filter(line => !oldLines.includes(line));
-  if (unseenLines.length === 0) {
-    return { merged: cleanExisting, changed: false };
+  // Append incoming lines at the end if last line differs from existing last line
+  const lastOld = (oldLines[oldLines.length - 1] || '').trim();
+  const lastNew = (newLines[newLines.length - 1] || '').trim();
+  if (lastNew && lastNew !== lastOld) {
+    return {
+      merged: cleanExisting + '\n' + newLines.join('\n'),
+      changed: true
+    };
   }
 
-  return {
-    merged: cleanExisting + '\n' + unseenLines.join('\n'),
-    changed: true
-  };
+  return { merged: cleanExisting, changed: false };
 }
 
 function stripSyntheticCallText(raw) {
@@ -646,20 +869,38 @@ function processLeadIngest(payload) {
   const isPreview = Boolean(payload.is_preview || payload.isPreview);
   const candidatePhone = sanitizePhone(payload.candidate_phone || payload.phone || '');
   const pKey = phoneKey10(candidatePhone);
-  const candidateEmail = sanitizeEmail(
-    payload.candidate_email ||
-    payload.email ||
-    ((text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/) || [])[0] || '')
+  const candidateEmail = extractValidCandidateEmail(
+    payload.candidate_email || payload.email || '',
+    text
   );
 
   let rawCandidateName = sanitizeString(payload.candidate_name || payload.name || '', 100);
+
+  const isWhatsApp = channelRaw.toLowerCase().includes('whatsapp');
+  const isEmail = channelRaw.toLowerCase().includes('email') || channelRaw.toLowerCase().includes('gmail');
+  const isCall = channelRaw.toLowerCase().includes('call');
+  const cleanChannelLabel = isWhatsApp ? 'WhatsApp' : (isEmail ? 'Email' : (isCall ? 'Call' : channelRaw));
+
+  // Skip automated / job-board marketing emails that failed candidateEmail validation
+  if (isEmail && !candidateEmail && !pKey) {
+    return { status: 'ignored', message: 'Automated or system email skipped' };
+  }
 
   // Skip internal company HR reporting groups
   if (isInternalGroup(rawCandidateName, text)) {
     return { status: 'ignored', message: 'Internal team group skipped' };
   }
 
-  const extractedName = extractCandidateName(text);
+  const incomingRecruiterHint = canonicalRecruiterName(
+    sanitizeString(payload.recruiter_name || payload.recruiter || 'Suhani Sisodiya', 100),
+    payload.recruiter_email || ''
+  );
+
+  // Phone calls never create or inject synthetic chat text; normalize speaker attribution for WhatsApp transcripts
+  const rawChatText = isCall ? '' : stripSyntheticCallText(text);
+  const chatText = isWhatsApp ? normalizeTranscriptSpeakers(rawChatText, incomingRecruiterHint) : rawChatText;
+
+  const extractedName = extractCandidateName(chatText || text);
   let candidateName = rawCandidateName;
   if (extractedName && (isGenericCandidateName(candidateName) || candidateName === candidateEmail.split('@')[0])) {
     candidateName = extractedName;
@@ -670,13 +911,6 @@ function processLeadIngest(payload) {
     else candidateName = 'Candidate';
   }
 
-  const isWhatsApp = channelRaw.toLowerCase().includes('whatsapp');
-  const isEmail = channelRaw.toLowerCase().includes('email') || channelRaw.toLowerCase().includes('gmail');
-  const isCall = channelRaw.toLowerCase().includes('call');
-  const cleanChannelLabel = isWhatsApp ? 'WhatsApp' : (isEmail ? 'Email' : (isCall ? 'Call' : channelRaw));
-
-  // Phone calls never create or inject synthetic chat text
-  const chatText = isCall ? '' : stripSyntheticCallText(text);
   const classification = classifyLead(chatText, payload.category || payload.custom_tag);
   const leads = getLeads();
 
@@ -690,7 +924,7 @@ function processLeadIngest(payload) {
   }
   if (existingIndex === -1 && !pKey && !candidateEmail && !isGenericCandidateName(candidateName)) {
     existingIndex = leads.findIndex(
-      l => !l.phone && !l.email && (l.candidateName || '').toLowerCase().trim() === candidateName.toLowerCase().trim()
+      l => (l.candidateName || '').toLowerCase().trim() === candidateName.toLowerCase().trim()
     );
   }
 
@@ -708,10 +942,12 @@ function processLeadIngest(payload) {
     let hasMeaningfulUpdate = Boolean(payload._forceActivity);
 
     if (isWhatsApp && chatText) {
-      const baseWa = existing.whatsappTranscript || ((existing.channel || '').toLowerCase().includes('whatsapp') ? stripSyntheticCallText(existing.rawText) : '');
+      const baseWaRaw = existing.whatsappTranscript || ((existing.channel || '').toLowerCase().includes('whatsapp') ? stripSyntheticCallText(existing.rawText) : '');
+      const baseWa = normalizeTranscriptSpeakers(baseWaRaw, existing.recruiter || incomingRecruiterHint);
       const merged = mergeChatTranscript(baseWa, chatText, isPreview);
-      if (merged.changed) {
-        existing.whatsappTranscript = merged.merged;
+      const normalizedMerged = normalizeTranscriptSpeakers(merged.merged, existing.recruiter || incomingRecruiterHint);
+      if (merged.changed || normalizedMerged !== existing.whatsappTranscript) {
+        existing.whatsappTranscript = normalizedMerged;
         hasMeaningfulUpdate = true;
       }
     } else if (isEmail && chatText) {
@@ -799,10 +1035,15 @@ function processLeadIngest(payload) {
       existing.activityDates.sort();
     }
 
-    if (payload.recruiter_name || payload.recruiter) {
-      const rec = sanitizeString(payload.recruiter_name || payload.recruiter, 100);
-      if (rec && rec !== 'Unknown' && (!existing.recruiter || existing.recruiter === 'Unknown')) {
-        existing.recruiter = rec;
+    const incomingRec = canonicalRecruiterName(
+      sanitizeString(payload.recruiter_name || payload.recruiter || existing.recruiter || 'Suhani Sisodiya', 100),
+      payload.recruiter_email || ''
+    );
+    if (incomingRec && incomingRec !== 'Unknown') {
+      if (!existing.recruiter || existing.recruiter === 'Unknown' || canonicalRecruiterName(existing.recruiter) === incomingRec) {
+        existing.recruiter = incomingRec;
+      } else {
+        existing.recruiter = canonicalRecruiterName(existing.recruiter);
       }
     }
 
@@ -816,7 +1057,10 @@ function processLeadIngest(payload) {
   }
 
   // CREATE BRAND NEW LEAD
-  const recruiterName = sanitizeString(payload.recruiter_name || payload.recruiter || 'Suhani', 100);
+  const recruiterName = canonicalRecruiterName(
+    sanitizeString(payload.recruiter_name || payload.recruiter || 'Suhani Sisodiya', 100),
+    payload.recruiter_email || ''
+  );
   const currentCtc = sanitizeString(payload.current_ctc || extractCurrentCtc(chatText), 60);
   const expectedCtc = sanitizeString(payload.expected_ctc || extractExpectedCtc(chatText), 60);
   const noticePeriod = sanitizeString(payload.notice_period || extractNoticePeriod(chatText), 60);
@@ -865,6 +1109,15 @@ function processLeadIngest(payload) {
 // PHONE CALL LOGGER (Start Time, End Time, Duration, Direction — Zero Audio/AI)
 // =========================================================================
 
+function parseCallDirection(rawDir, fallback = 'outgoing') {
+  if (!rawDir) return fallback;
+  const s = String(rawDir).toLowerCase().trim();
+  if (/miss|reject|unanswer|declined|cancelled/i.test(s)) return 'missed';
+  if (/out|dial|made|\b2\b/i.test(s)) return 'outgoing';
+  if (/^in|incoming|received|\b1\b/i.test(s)) return 'incoming';
+  return fallback;
+}
+
 function processCallLog(data) {
   const phone = sanitizePhone(
     data.candidate_phone || data.phone || data.number || data.phone_number || data.caller || ''
@@ -877,7 +1130,10 @@ function processCallLog(data) {
   }
 
   const pKey = phoneKey10(phone);
-  const recruiterName = sanitizeString(data.recruiter_name || data.recruiter || 'Suhani', 100);
+  const recruiterName = canonicalRecruiterName(
+    sanitizeString(data.recruiter_name || data.recruiter || 'Suhani Sisodiya', 100),
+    data.recruiter_email || ''
+  );
   const recruiterPhone = sanitizePhone(data.recruiter_phone || '');
   let candidateName = sanitizeString(data.candidate_name || data.name || data.contact_name || '', 100);
 
@@ -910,9 +1166,7 @@ function processCallLog(data) {
   let endDate;
 
   const isExplicitZeroTalk =
-    rawDir.includes('miss') ||
-    rawDir.includes('reject') ||
-    rawDir.includes('unanswer') ||
+    /miss|reject|unanswer|declined/i.test(rawDir) ||
     Boolean(data.force_zero_duration);
 
   if (hasStart && hasEnd) {
@@ -930,14 +1184,7 @@ function processCallLog(data) {
     startDate = new Date(endDate.getTime() - durationSec * 1000);
   }
 
-  let direction = 'outgoing';
-  if (rawDir.includes('miss') || rawDir.includes('reject') || rawDir.includes('unanswer')) {
-    direction = 'missed';
-  } else if (rawDir.includes('in') || rawDir === '1') {
-    direction = durationSec === 0 && rawDir.includes('miss') ? 'missed' : 'incoming';
-  } else if (rawDir.includes('out') || rawDir === '2') {
-    direction = 'outgoing';
-  }
+  let direction = parseCallDirection(rawDir, 'outgoing');
   if (direction === 'incoming' && durationSec === 0 && !hasStart) {
     direction = 'missed';
   }
@@ -1066,7 +1313,10 @@ function resolveLiveCandidateName(phone, rawName) {
 
 function processLiveCallEvent(data, eventTimeMs = Date.now()) {
   const event = sanitizeString(data.event || data.state || 'ended', 30).toLowerCase();
-  const recruiterName = sanitizeString(data.recruiter || data.recruiter_name || 'Suhani', 100);
+  const recruiterName = canonicalRecruiterName(
+    sanitizeString(data.recruiter || data.recruiter_name || 'Suhani Sisodiya', 100),
+    data.recruiter_email || ''
+  );
   const rKey = recruiterName.toLowerCase().trim();
 
   const incomingPhone = sanitizePhone(data.phone || data.candidate_phone || data.number || '');
@@ -1080,14 +1330,23 @@ function processLiveCallEvent(data, eventTimeMs = Date.now()) {
 
   // 1. RINGING / DIALING (Before call is answered)
   if (event === 'ringing' || event === 'incoming' || event === 'dialing' || event === 'outgoing') {
-    const direction = (event === 'ringing' || event === 'incoming' || rawDir.includes('in')) ? 'incoming' : 'outgoing';
+    const isRingEvent = event === 'ringing' || event === 'incoming';
+    const direction = isRingEvent ? 'incoming' : parseCallDirection(rawDir, 'outgoing');
+
+    // If call is ALREADY TALKING, never downgrade to ringing or wipe talkStartMs!
+    if (existing && (existing.status === 'talking' || existing.talkStartMs)) {
+      if (finalPhone && (!existing.phone || existing.phone.includes('.'))) existing.phone = finalPhone;
+      if (finalName && (!existing.candidateName || existing.candidateName.includes('('))) existing.candidateName = finalName;
+      return { status: 'success', state: 'talking', liveCall: existing };
+    }
+
     const stateObj = {
       recruiterName,
       phone: finalPhone || 'Connecting...',
       candidateName: finalName,
       direction,
       status: direction === 'incoming' ? 'ringing' : 'dialing',
-      ringStartMs: eventNow.getTime(),
+      ringStartMs: (existing && existing.ringStartMs) ? existing.ringStartMs : eventNow.getTime(),
       talkStartMs: null,
       startLocal: formatLocalTimestamp(eventNow),
       startDisplay: formatDisplayDateTime(eventNow)
@@ -1097,11 +1356,18 @@ function processLiveCallEvent(data, eventTimeMs = Date.now()) {
     return { status: 'success', state: stateObj.status, liveCall: stateObj };
   }
 
-  // 2. CALL ACTIVE / ANSWERED (Exact millisecond talk timer starts!)
+  // 2. CALL ACTIVE / ANSWERED (Exact talk timer starts!)
   if (event === 'started' || event === 'active' || event === 'answered' || event === 'start') {
-    const direction = rawDir.includes('in')
-      ? 'incoming'
-      : (rawDir.includes('out') ? 'outgoing' : (existing ? existing.direction : 'outgoing'));
+    // If there was an incoming ringing event earlier, it's incoming.
+    // If no ringing event arrived (recruiter dialed directly), it's outgoing!
+    let direction = 'outgoing';
+    if (rawDir) {
+      direction = parseCallDirection(rawDir, existing ? existing.direction : 'outgoing');
+    } else if (existing && existing.direction) {
+      direction = existing.direction;
+    } else {
+      direction = 'outgoing';
+    }
 
     const stateObj = {
       recruiterName,
@@ -1126,43 +1392,99 @@ function processLiveCallEvent(data, eventTimeMs = Date.now()) {
     broadcastLiveCallsState();
 
     const explicitDur = parseDurationToSeconds(data.duration ?? data.call_duration ?? data.call_duration_seconds ?? 0);
+    const finalDir = parseCallDirection(
+      rawDir || (existing ? existing.direction : ''),
+      (existing && existing.status === 'ringing') ? 'incoming' : 'outgoing'
+    );
 
-    // Case A: Live stopwatch captured exact talkStartMs!
+    // Case A: Live stopwatch captured talkStartMs!
     if (existing && existing.talkStartMs) {
-      const startDate = new Date(existing.talkStartMs);
-      const liveDurationSec = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / 1000));
+      const rawElapsedSec = Math.max(0, Math.round((endDate.getTime() - existing.talkStartMs) / 1000));
+
+      let effectiveDur = explicitDur > 0 ? explicitDur : rawElapsedSec;
+      let effectiveStartDate = new Date(existing.talkStartMs);
+      let callDirection = finalDir;
+
+      // Smart Outgoing Ringing Elimination:
+      // On Android outgoing calls, "Call Active" fires at dial time (while phone is ringing on candidate side).
+      // If elapsed time is <= 10s: call was never answered (rejected / unreachable / cut during ringing).
+      // If elapsed time > 10s: candidate answered after standard ~8s ringing, so subtract 8s ringing time!
+      if (finalDir === 'outgoing' && explicitDur === 0) {
+        if (rawElapsedSec <= 10) {
+          effectiveDur = 0;
+          callDirection = 'outgoing'; // Unanswered outgoing call
+          effectiveStartDate = endDate;
+        } else {
+          const ringDeductionSec = 8;
+          effectiveDur = Math.max(1, rawElapsedSec - ringDeductionSec);
+          effectiveStartDate = new Date(endDate.getTime() - effectiveDur * 1000);
+        }
+      }
+
       return processCallLog({
         recruiter_name: recruiterName,
         candidate_phone: finalPhone,
         candidate_name: finalName,
-        call_direction: existing.direction || (rawDir.includes('in') ? 'incoming' : 'outgoing'),
+        call_direction: callDirection,
+        call_start_time: formatLocalTimestamp(effectiveStartDate),
+        call_end_time: formatLocalTimestamp(endDate),
+        call_duration_seconds: effectiveDur,
+        force_zero_duration: effectiveDur === 0
+      });
+    }
+
+    // Case B: Explicit call duration reported directly by phone telecom ({call_duration})
+    if (explicitDur > 0) {
+      const startDate = new Date(endDate.getTime() - explicitDur * 1000);
+      return processCallLog({
+        recruiter_name: recruiterName,
+        candidate_phone: finalPhone,
+        candidate_name: finalName,
+        call_direction: finalDir,
         call_start_time: formatLocalTimestamp(startDate),
         call_end_time: formatLocalTimestamp(endDate),
-        call_duration_seconds: explicitDur > 0 ? explicitDur : liveDurationSec
+        call_duration_seconds: explicitDur
       });
     }
 
-    // Case B: Phone rang/dialed (`ringStartMs`) and cut BEFORE `Call Active` -> Missed / Unanswered (0s)!
-    if (existing && existing.ringStartMs && !existing.talkStartMs && explicitDur === 0) {
+    // Case C: Phone rang (`ringStartMs`) and ended without explicit talkStartMs packet
+    if (existing && existing.ringStartMs) {
       const ringDate = new Date(existing.ringStartMs);
-      return processCallLog({
-        recruiter_name: recruiterName,
-        candidate_phone: finalPhone,
-        candidate_name: finalName,
-        call_direction: existing.direction === 'incoming' ? 'missed' : 'outgoing',
-        call_start_time: formatLocalTimestamp(ringDate),
-        call_end_time: formatLocalTimestamp(endDate),
-        call_duration_seconds: 0,
-        force_zero_duration: true
-      });
+      const elapsedSec = Math.max(0, Math.round((endDate.getTime() - ringDate.getTime()) / 1000));
+
+      if (elapsedSec >= 8) {
+        const assumedTalkSec = Math.max(1, elapsedSec - 5);
+        const talkStartDate = new Date(endDate.getTime() - assumedTalkSec * 1000);
+        return processCallLog({
+          recruiter_name: recruiterName,
+          candidate_phone: finalPhone,
+          candidate_name: finalName,
+          call_direction: finalDir,
+          call_start_time: formatLocalTimestamp(talkStartDate),
+          call_end_time: formatLocalTimestamp(endDate),
+          call_duration_seconds: assumedTalkSec
+        });
+      } else {
+        // Cut within 0-7s -> Genuine missed / cut call
+        return processCallLog({
+          recruiter_name: recruiterName,
+          candidate_phone: finalPhone,
+          candidate_name: finalName,
+          call_direction: finalDir === 'outgoing' ? 'outgoing' : 'missed',
+          call_start_time: formatLocalTimestamp(ringDate),
+          call_end_time: formatLocalTimestamp(endDate),
+          call_duration_seconds: 0,
+          force_zero_duration: true
+        });
+      }
     }
 
-    // Case C: Fallback single-event Call Ended
+    // Case D: Fallback single-event Call Ended
     return processCallLog({
       recruiter_name: recruiterName,
       candidate_phone: finalPhone,
       candidate_name: finalName,
-      call_direction: rawDir || 'outgoing',
+      call_direction: finalDir,
       call_duration_seconds: explicitDur
     });
   }
@@ -1240,13 +1562,23 @@ function serveStaticFile(filePath, res) {
 // ROLE FILTERING & DATE HELPERS
 // =========================================================================
 
+function recruiterMatches(itemRecruiter, targetRecruiter) {
+  if (!itemRecruiter || !targetRecruiter) return false;
+  const a = canonicalRecruiterName(itemRecruiter).toLowerCase().trim();
+  const b = canonicalRecruiterName(targetRecruiter).toLowerCase().trim();
+  if (a === b) return true;
+  const aFirst = a.split(/\s+/)[0];
+  const bFirst = b.split(/\s+/)[0];
+  return Boolean(aFirst && aFirst === bFirst);
+}
+
 function filterByRole(items, recruiterField, userRole, userName, queryRecruiter) {
   if (userRole === 'recruiter') {
-    return items.filter(item => (item[recruiterField] || '').toLowerCase().trim() === userName);
+    return items.filter(item => recruiterMatches(item[recruiterField], userName));
   }
   if (userRole === 'admin' || userRole === 'team_leader') {
     if (queryRecruiter && queryRecruiter !== 'all') {
-      return items.filter(item => (item[recruiterField] || '').toLowerCase().trim() === queryRecruiter);
+      return items.filter(item => recruiterMatches(item[recruiterField], queryRecruiter));
     }
     return items;
   }
@@ -1350,9 +1682,16 @@ const server = http.createServer(async (req, res) => {
       const recruiters = getRecruiters();
       const phones = [...new Set(leads.map(l => phoneKey10(l.phone)).filter(p => p.length >= 10))];
       const emails = [...new Set(leads.map(l => sanitizeEmail(l.email || '')).filter(Boolean))];
+      const candidateNames = [
+        ...new Set(
+          leads
+            .map(l => (l.candidateName || '').toLowerCase().trim())
+            .filter(n => n && !isGenericCandidateName(n))
+        )
+      ];
       const names = [...new Set(recruiters.map(r => r.name).filter(Boolean))];
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'success', phones, emails, recruiters: names }));
+      res.end(JSON.stringify({ status: 'success', phones, emails, candidateNames, recruiters: names }));
       return;
     }
 
@@ -1474,21 +1813,27 @@ const server = http.createServer(async (req, res) => {
       const allLeads = getLeads();
       const allCalls = getCallLogs();
 
-      // Dynamically include any recruiter name seen in leads or calls
+      // Dynamically include any recruiter name seen in leads or calls (normalized to canonical names)
       const knownMap = new Map();
       baseRecruiters.forEach(r => {
-        knownMap.set(r.name.toLowerCase().trim(), { ...r });
+        const cName = canonicalRecruiterName(r.name);
+        const key = cName.toLowerCase().trim();
+        if (!knownMap.has(key)) {
+          knownMap.set(key, { ...r, name: cName });
+        }
       });
       allLeads.forEach(l => {
-        const key = (l.recruiter || '').toLowerCase().trim();
+        const cName = canonicalRecruiterName(l.recruiter || '');
+        const key = cName.toLowerCase().trim();
         if (key && key !== 'unknown' && !knownMap.has(key)) {
-          knownMap.set(key, { id: 'REC-DYN-' + knownMap.size, name: l.recruiter.trim(), status: 'Active' });
+          knownMap.set(key, { id: 'REC-DYN-' + knownMap.size, name: cName, status: 'Active' });
         }
       });
       allCalls.forEach(c => {
-        const key = (c.recruiterName || '').toLowerCase().trim();
+        const cName = canonicalRecruiterName(c.recruiterName || '');
+        const key = cName.toLowerCase().trim();
         if (key && key !== 'unknown' && !knownMap.has(key)) {
-          knownMap.set(key, { id: 'REC-DYN-' + knownMap.size, name: c.recruiterName.trim(), status: 'Active' });
+          knownMap.set(key, { id: 'REC-DYN-' + knownMap.size, name: cName, status: 'Active' });
         }
       });
 
@@ -1497,11 +1842,11 @@ const server = http.createServer(async (req, res) => {
       const recruiters = Array.from(knownMap.values()).map(r => {
         const rKey = (r.name || '').toLowerCase().trim();
         const rLeads = allLeads.filter(l => {
-          if ((l.recruiter || '').toLowerCase().trim() !== rKey) return false;
+          if (!recruiterMatches(l.recruiter, rKey)) return false;
           return filterDay ? ensureActivityDates(l).includes(filterDay) : true;
         });
         const rCalls = allCalls.filter(c => {
-          if ((c.recruiterName || '').toLowerCase().trim() !== rKey) return false;
+          if (!recruiterMatches(c.recruiterName, rKey)) return false;
           const dk = c.dateKey || getLocalDateKey(c.callStartTime || c.loggedAt);
           return filterDay ? dk === filterDay : true;
         });

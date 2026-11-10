@@ -5,6 +5,11 @@
 // - Captures attachment filenames, phone numbers, CTC & Notice Period automatically
 // ==========================================================================================
 
+(() => {
+  if (window.__crmGmailInterval) {
+    clearInterval(window.__crmGmailInterval);
+  }
+
 const KEYWORDS = [
   "job", "position", "resume", "cv", "vacancy", "notice period", "ctc", "salary",
   "interview", "fresher", "experience", "hike", "profile", "opening", "package", "lpa",
@@ -33,8 +38,76 @@ const NON_NAME_WORDS = new Set([
   'please', 'plz', 'kindly', 'help', 'resume', 'cv', 'curriculum', 'vitae', 'profile', 'updated',
   'professional', 'page', 'pages', 'final', 'latest', 'pdf', 'doc', 'docx', 'regarding',
   'hiring', 'software', 'frontend', 'backend', 'fullstack', 'react', 'java', 'python', 'node',
-  'ui', 'ux', 'qa', 'support', 'admin', 'orbitouch', 'outsourcing'
+  'ui', 'ux', 'qa', 'support', 'admin', 'orbitouch', 'outsourcing',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'today', 'yesterday',
+  'suhani', 'sisodiya', 'pooja', 'jyoti', 'akshay', 'munisha', 'sakshi', 'akshita', 'divanshi',
+  'gunjan', 'kamakshi', 'manshi', 'shriparna', 'neetu', 'kajal'
 ]);
+
+const RECRUITER_MAP = {
+  "pooja": "Pooja Singh",
+  "pooja singh": "Pooja Singh",
+  "jyoti": "Jyoti Shah",
+  "jyoti shah": "Jyoti Shah",
+  "suhani": "Suhani Sisodiya",
+  "suhani sisodiya": "Suhani Sisodiya",
+  "akshay": "Akshay Pandey",
+  "akshay pandey": "Akshay Pandey",
+  "munisha": "Munisha Thakur",
+  "munisha thakur": "Munisha Thakur",
+  "sakshi": "Sakshi Kaur",
+  "sakshi kaur": "Sakshi Kaur",
+  "akshita": "Akshita Nayal",
+  "akshita nayal": "Akshita Nayal",
+  "divanshi": "Divanshi Gupta",
+  "divanshi gupta": "Divanshi Gupta",
+  "gunjan": "Gunjan Sharma",
+  "gunjan sharma": "Gunjan Sharma",
+  "kamakshi": "Kamakshi Kaushik",
+  "kamakshi kaushik": "Kamakshi Kaushik",
+  "manshi": "Manshi Agnihotri",
+  "manshi agnihotri": "Manshi Agnihotri",
+  "shriparna": "Shriparna Acharya",
+  "shriparna acharya": "Shriparna Acharya",
+  "neetu": "Neetu Sharma",
+  "neetu sharma": "Neetu Sharma"
+};
+
+const EMAIL_TO_RECRUITER_MAP = {
+  "pooja@orbitouch-hr.com": "Pooja Singh",
+  "jyoti.shah@orbitouch-hr.com": "Jyoti Shah",
+  "suhani@orbitouch-hr.com": "Suhani Sisodiya",
+  "akshay@orbitouch-hr.com": "Akshay Pandey",
+  "munisha@orbitouch-hr.com": "Munisha Thakur",
+  "sakshi@orbitouch-hr.com": "Sakshi Kaur",
+  "akshita@orbitouch-hr.com": "Akshita Nayal",
+  "divanshi@orbitouch-hr.com": "Divanshi Gupta",
+  "gunjan@orbitouch-hr.com": "Gunjan Sharma",
+  "kamakshi@orbitouch-hr.com": "Kamakshi Kaushik",
+  "manshi@orbitouch-hr.com": "Manshi Agnihotri",
+  "shriparna@orbitouch-hr.com": "Shriparna Acharya",
+  "neetu.sharma@orbitouch-hr.com": "Neetu Sharma",
+  "neetu@orbitouch-hr.com": "Neetu Sharma"
+};
+
+function normalizeRecruiterName(name, email = "") {
+  const cleanEmail = String(email || "").toLowerCase().trim();
+  if (cleanEmail && EMAIL_TO_RECRUITER_MAP[cleanEmail]) {
+    return EMAIL_TO_RECRUITER_MAP[cleanEmail];
+  }
+  if (!name) return "Suhani Sisodiya";
+  const clean = String(name).replace(/\s*\(Alt\)$/i, "").trim();
+  return RECRUITER_MAP[clean.toLowerCase()] || clean;
+}
+
+function isRecruiterOrAutomatedEmail(email) {
+  const e = String(email || "").toLowerCase().trim();
+  if (!e || !e.includes("@")) return true;
+  if (e.endsWith("@orbitouch-hr.com")) return true;
+  if (/^(?:no-?reply|updates-noreply|messages-noreply|donotreply|notifications|mailer-daemon|naukritalentcloud|alerts|info|marketing|newsletter|support|career|careers|talent)@/i.test(e)) return true;
+  if (/@(?:naukri\.com|linkedin\.com|shine\.com|indeed\.com|foundit\.in|apna\.co|workindia\.in|intellohire\.com|cxolanes\.in|jwalix\.com|masaischool\.com|google\.com)$/i.test(e)) return true;
+  return false;
+}
 
 function cleanPersonName(raw) {
   if (!raw) return "";
@@ -81,7 +154,7 @@ function extractCandidateName(text) {
 }
 
 let cachedConfig = {
-  recruiterName: "Suhani",
+  recruiterName: "Suhani Sisodiya",
   webhookUrl: "http://192.168.1.34:3000/api/webhook",
   autoSync: true,
   stealthMode: false
@@ -90,6 +163,7 @@ let cachedConfig = {
 let knownCrmEmails = new Set();
 const candidateEmailRegistry = new Set();
 const lastSyncedEmailHashMap = new Map();
+const lastSyncedInboxPreviewHashMap = new Map();
 
 function quickHash(str) {
   let h = 0;
@@ -102,9 +176,14 @@ function quickHash(str) {
 
 if (chrome?.storage?.local) {
   chrome.storage.local.get(
-    ["recruiterName", "webhookUrl", "autoSync", "stealthMode", "knownEmails", "gmailSyncedHashes", "gmailLeadRegistry"],
+    ["recruiterName", "webhookUrl", "autoSync", "stealthMode", "knownEmails", "gmailSyncedHashes", "gmailInboxHashes", "gmailLeadRegistry"],
     (res) => {
-      if (res.recruiterName) cachedConfig.recruiterName = res.recruiterName;
+      if (res.recruiterName) {
+        cachedConfig.recruiterName = normalizeRecruiterName(res.recruiterName);
+        if (cachedConfig.recruiterName !== res.recruiterName) {
+          chrome.storage.local.set({ recruiterName: cachedConfig.recruiterName });
+        }
+      }
       if (res.webhookUrl) cachedConfig.webhookUrl = res.webhookUrl;
       if (res.autoSync !== undefined) cachedConfig.autoSync = res.autoSync;
       if (res.stealthMode !== undefined) cachedConfig.stealthMode = res.stealthMode;
@@ -113,11 +192,14 @@ if (chrome?.storage?.local) {
       if (res.gmailSyncedHashes && typeof res.gmailSyncedHashes === "object") {
         Object.entries(res.gmailSyncedHashes).forEach(([k, v]) => lastSyncedEmailHashMap.set(k, v));
       }
+      if (res.gmailInboxHashes && typeof res.gmailInboxHashes === "object") {
+        Object.entries(res.gmailInboxHashes).forEach(([k, v]) => lastSyncedInboxPreviewHashMap.set(k, v));
+      }
     }
   );
 
   chrome.storage.onChanged.addListener((changes) => {
-    if (changes.recruiterName) cachedConfig.recruiterName = changes.recruiterName.newValue;
+    if (changes.recruiterName) cachedConfig.recruiterName = normalizeRecruiterName(changes.recruiterName.newValue);
     if (changes.webhookUrl) cachedConfig.webhookUrl = changes.webhookUrl.newValue;
     if (changes.autoSync !== undefined) cachedConfig.autoSync = changes.autoSync.newValue;
     if (changes.stealthMode !== undefined) cachedConfig.stealthMode = changes.stealthMode.newValue;
@@ -134,8 +216,11 @@ function persistEmailState() {
     if (!chrome?.runtime?.id) return;
     const hashObj = {};
     Array.from(lastSyncedEmailHashMap.entries()).slice(-300).forEach(([k, v]) => { hashObj[k] = v; });
+    const inboxHashObj = {};
+    Array.from(lastSyncedInboxPreviewHashMap.entries()).slice(-300).forEach(([k, v]) => { inboxHashObj[k] = v; });
     chrome.storage.local.set({
       gmailSyncedHashes: hashObj,
+      gmailInboxHashes: inboxHashObj,
       gmailLeadRegistry: Array.from(candidateEmailRegistry).slice(-300)
     });
   }, 1500);
@@ -148,7 +233,17 @@ function getRecruiterEmailFromDOM() {
   if (accountLink) {
     const raw = accountLink.getAttribute("aria-label") || accountLink.title || "";
     const m = raw.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-    if (m) return m[1].toLowerCase().trim();
+    if (m) {
+      const detectedEmail = m[1].toLowerCase().trim();
+      const mappedRecruiter = EMAIL_TO_RECRUITER_MAP[detectedEmail];
+      if (mappedRecruiter && cachedConfig.recruiterName !== mappedRecruiter) {
+        cachedConfig.recruiterName = mappedRecruiter;
+        if (chrome?.storage?.local) {
+          chrome.storage.local.set({ recruiterName: mappedRecruiter });
+        }
+      }
+      return detectedEmail;
+    }
   }
   return "";
 }
@@ -213,7 +308,7 @@ function scanActiveEmailThread() {
   if (!subject || IGNORE_SUBJECT_WORDS.some(w => subject.toLowerCase().includes(w))) return;
 
   const recruiterEmail = getRecruiterEmailFromDOM();
-  const recruiterName = cachedConfig.recruiterName || "Suhani";
+  const recruiterName = normalizeRecruiterName(cachedConfig.recruiterName, recruiterEmail);
 
   // Target individual message items in Gmail thread without nested duplicates
   const rawContainers = Array.from(mainArea.querySelectorAll("div.adn, div.kv, div[data-message-id]"));
@@ -252,6 +347,7 @@ function scanActiveEmailThread() {
 
     const isFromRecruiter =
       (recruiterEmail && rawEmail === recruiterEmail) ||
+      rawEmail.endsWith("@orbitouch-hr.com") ||
       (recruiterName && rawName.toLowerCase().includes(recruiterName.toLowerCase())) ||
       rawName.toLowerCase().includes("orbitouch") ||
       bodyText.toLowerCase().includes("orbitouch outsourcing");
@@ -259,7 +355,7 @@ function scanActiveEmailThread() {
     if (isFromRecruiter) {
       transcriptLines.push(`[Recruiter - ${rawName || recruiterName}${timeStr ? " (" + timeStr + ")" : ""}]: ${bodyText}`);
     } else {
-      if (rawEmail && !candidateEmail) {
+      if (rawEmail && !candidateEmail && !isRecruiterOrAutomatedEmail(rawEmail)) {
         candidateEmail = rawEmail;
         candidateName = cleanPersonName(rawName) || rawName || rawEmail.split("@")[0];
       }
@@ -268,19 +364,30 @@ function scanActiveEmailThread() {
     }
   });
 
-  // Outbound first-email fallback: check recipient To field
+  // Outbound first-email fallback: check recipient To field or emails inside body text
   if (!candidateEmail) {
-    const toEl = mainArea.querySelector("span.g2 span[email], span[email]");
-    if (toEl) {
+    const toEls = mainArea.querySelectorAll("span.g2 span[email], span[email]");
+    for (const toEl of toEls) {
       const toEmail = (toEl.getAttribute("email") || "").toLowerCase().trim();
-      if (toEmail && toEmail !== recruiterEmail) {
+      if (toEmail && !isRecruiterOrAutomatedEmail(toEmail)) {
         candidateEmail = toEmail;
         candidateName = cleanPersonName(toEl.getAttribute("name") || "") || toEmail.split("@")[0];
+        break;
+      }
+    }
+  }
+  if (!candidateEmail) {
+    const bodyEmMatches = fullThreadTextForKeywords.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+    for (const m of bodyEmMatches) {
+      const cleanM = m.toLowerCase().trim();
+      if (!isRecruiterOrAutomatedEmail(cleanM)) {
+        candidateEmail = cleanM;
+        break;
       }
     }
   }
 
-  if (!candidateEmail || !candidateEmail.includes("@")) return;
+  if (!candidateEmail || isRecruiterOrAutomatedEmail(candidateEmail)) return;
 
   const extractedName = extractCandidateName(candidateTextOnly || fullThreadTextForKeywords);
   if (extractedName) candidateName = extractedName;
@@ -348,6 +455,8 @@ function scanInboxRows() {
   const rows = document.querySelectorAll("div[role='main'] tr.zA, tr.zA");
   if (!rows || rows.length === 0) return;
 
+  const seenEmailsInPass = new Set();
+
   rows.forEach(row => {
     // Capture unread emails, today's emails, or any recent inbox emails matching recruitment keywords/known candidates
     const isUnread = row.classList.contains("zE");
@@ -355,12 +464,34 @@ function scanInboxRows() {
     const isTodayRow = /\d{1,2}:\d{2}/.test(timeCol);
 
     const rowText = (row.innerText || "").toLowerCase();
-    const senderEl = row.querySelector("span.bA4 span[email], span[email]");
-    const email = senderEl ? (senderEl.getAttribute("email") || "").toLowerCase().trim() : "";
-    if (!email || !email.includes("@")) return;
+    const senderEls = row.querySelectorAll("span.bA4 span[email], span[email]");
+    let email = "";
+    let senderEl = null;
+    for (const sEl of senderEls) {
+      const em = (sEl.getAttribute("email") || "").toLowerCase().trim();
+      if (em && !isRecruiterOrAutomatedEmail(em)) {
+        email = em;
+        senderEl = sEl;
+        break;
+      }
+    }
+    if (!email) {
+      // Fallback: check if candidate email is mentioned inside snippet (e.g., candidate replied and recruiter also replied)
+      const snippetEmMatches = (row.innerText || "").match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+      for (const m of snippetEmMatches) {
+        const cleanM = m.toLowerCase().trim();
+        if (!isRecruiterOrAutomatedEmail(cleanM)) {
+          email = cleanM;
+          break;
+        }
+      }
+    }
+    if (!email || isRecruiterOrAutomatedEmail(email)) return;
+    if (seenEmailsInPass.has(email)) return;
+    seenEmailsInPass.add(email);
 
     const hasKeyword = KEYWORDS.some(k => rowText.includes(k));
-    const isKnown = knownCrmEmails.has(email);
+    const isKnown = knownCrmEmails.has(email) || candidateEmailRegistry.has(email);
 
     // If laptop was off for 10 days, capture unread or any candidate email in the recent inbox
     if (!hasKeyword && !isKnown) return;
@@ -385,19 +516,23 @@ function scanInboxRows() {
       subjectEl.parentElement.appendChild(badge);
     }
 
-    if (!lastSyncedEmailHashMap.has(email)) {
-      const previewTranscript = `Subject: ${subject}\n--------------------------------------------------\n[Candidate - ${rawName || email}]: ${snippet}`;
+    const previewTranscript = `Subject: ${subject}\n--------------------------------------------------\n[Candidate - ${rawName || email}]: ${snippet}`;
+    const previewHash = quickHash(previewTranscript);
+    const prevInboxHash = lastSyncedInboxPreviewHashMap.get(email);
+
+    if (previewHash !== prevInboxHash) {
+      const isInitial = !prevInboxHash && !lastSyncedEmailHashMap.has(email);
       candidateEmailRegistry.add(email);
-      lastSyncedEmailHashMap.set(email, quickHash(previewTranscript));
+      lastSyncedInboxPreviewHashMap.set(email, previewHash);
       persistEmailState();
 
       dispatchEmailLead({
-        candidateName: cleanPersonName(rawName) || rawName || email.split("@")[0],
+        candidateName: extractCandidateName(snippet) || cleanPersonName(rawName) || rawName || email.split("@")[0],
         candidateEmail: email,
         candidatePhone: extractPhoneNumber(row.innerText),
         subject,
         fullTranscript: previewTranscript,
-        isInitial: true,
+        isInitial,
         isPreview: true
       });
     }
@@ -407,11 +542,13 @@ function scanInboxRows() {
 function dispatchEmailLead({ candidateName, candidateEmail, candidatePhone, subject, fullTranscript, isInitial, isPreview }) {
   if (!chrome?.runtime?.id) return;
 
-  const recruiter = cachedConfig.recruiterName || "Suhani";
+  const recruiterEmail = getRecruiterEmailFromDOM();
+  const recruiter = normalizeRecruiterName(cachedConfig.recruiterName, recruiterEmail);
   const payload = {
     source: "Email",
     is_preview: Boolean(isPreview),
     recruiter_name: recruiter,
+    recruiter_email: recruiterEmail,
     candidate_name: candidateName,
     candidate_email: candidateEmail,
     candidate_phone: candidatePhone || "",
@@ -487,9 +624,10 @@ document.addEventListener("keydown", (e) => {
   }
 }, true);
 
-setInterval(() => {
+window.__crmGmailInterval = setInterval(() => {
   if (cachedConfig.autoSync) {
     scanActiveEmailThread();
     scanInboxRows();
   }
 }, 1500);
+})();

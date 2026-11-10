@@ -25,7 +25,8 @@ Open `http://192.168.1.34:3000/phone` on the mobile browser to select your recru
 
 | Macro Name | Trigger (`Any Number`) | POST Body (`text/plain`) |
 | :--- | :--- | :--- |
-| **CRM Ringing** | `Call Incoming` | `event=ringing&recruiter=Suhani&phone={call_number}&name={call_name}` |
+| **CRM Ringing** | `Call Incoming` | `event=ringing&dir=incoming&recruiter=Suhani&phone={call_number}&name={call_name}` |
+| **CRM Outgoing** *(Optional)* | `Call Outgoing` | `event=dialing&dir=outgoing&recruiter=Suhani&phone={call_number}&name={call_name}` |
 | **CRM Call Start** | `Call Active` | `event=started&recruiter=Suhani&phone={call_number}&name={call_name}` |
 | **CRM Call End** | `Call Ended` | `event=ended&recruiter=Suhani&phone={call_number}&name={call_name}` |
 

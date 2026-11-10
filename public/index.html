@@ -1368,21 +1368,6 @@
         <span>Sign In to Workspace</span>
         <i class="fa-solid fa-arrow-right"></i>
       </button>
-
-      <div class="demo-access">
-        <div class="demo-access-label">Quick Role Switch</div>
-        <div class="demo-pills">
-          <button type="button" class="demo-pill" onclick="quickLogin('admin', 'admin@123')">
-            <i class="fa-solid fa-shield-halved"></i> Admin
-          </button>
-          <button type="button" class="demo-pill" onclick="quickLogin('tl', 'tl@123')">
-            <i class="fa-solid fa-users-gear"></i> Team Lead
-          </button>
-          <button type="button" class="demo-pill" onclick="quickLogin('suhani', 'suhani@123')">Suhani</button>
-          <button type="button" class="demo-pill" onclick="quickLogin('rahul', 'rahul@123')">Rahul</button>
-          <button type="button" class="demo-pill" onclick="quickLogin('pooja', 'pooja@123')">Pooja</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -2135,6 +2120,16 @@
       return digits.length >= 10 ? digits.slice(-10) : digits;
     }
 
+    function recruiterMatches(itemRecruiter, targetRecruiter) {
+      if (!itemRecruiter || !targetRecruiter) return false;
+      const cleanA = String(itemRecruiter).replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+      const cleanB = String(targetRecruiter).replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (cleanA === cleanB) return true;
+      const aFirst = cleanA.split(' ')[0];
+      const bFirst = cleanB.split(' ')[0];
+      return Boolean(aFirst && aFirst === bFirst);
+    }
+
     function toWhatsAppLink(phone) {
       const digits = String(phone || '').replace(/[^0-9]/g, '');
       if (digits.length < 10) return '';
@@ -2192,12 +2187,12 @@
 
       let calls = Array.isArray(liveActiveCalls) ? liveActiveCalls.slice() : [];
       if (currentUser.role === 'recruiter') {
-        calls = calls.filter(c => (c.recruiterName || '').toLowerCase().trim() === currentUser.name.toLowerCase().trim());
+        calls = calls.filter(c => recruiterMatches(c.recruiterName, currentUser.name));
       } else {
         const selEl = document.getElementById('teamRecruiterSelect');
         const selVal = selEl ? selEl.value : 'All';
         if (selVal && selVal !== 'All') {
-          calls = calls.filter(c => (c.recruiterName || '').toLowerCase().trim() === selVal.toLowerCase().trim());
+          calls = calls.filter(c => recruiterMatches(c.recruiterName, selVal));
         }
       }
 
@@ -2332,11 +2327,6 @@
       }
     });
 
-    async function quickLogin(u, p) {
-      document.getElementById('loginUsername').value = u;
-      document.getElementById('loginPassword').value = p;
-      await handleLogin();
-    }
 
     async function handleLogin() {
       const u = document.getElementById('loginUsername').value.trim();
@@ -2641,7 +2631,7 @@
 
       let rows = teamScorecard.slice();
       if (currentUser && currentUser.role === 'recruiter') {
-        rows = rows.filter(r => (r.name || '').toLowerCase() === currentUser.name.toLowerCase());
+        rows = rows.filter(r => recruiterMatches(r.name, currentUser.name));
       } else {
         rows.sort((a, b) => ((b.callsCount || 0) + (b.leadsCount || 0)) - ((a.callsCount || 0) + (a.leadsCount || 0)));
       }

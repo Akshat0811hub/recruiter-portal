@@ -3,8 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const recruiterDatalist = document.getElementById("recruiterList");
   const webhookInput = document.getElementById("webhookUrl");
   const saveBtn = document.getElementById("saveBtn");
-  const testCheckBtn = document.getElementById("testCheckBtn");
-  const testStatus = document.getElementById("testStatus");
   const connPill = document.getElementById("connPill");
   const serverInfoText = document.getElementById("serverInfoText");
   const queueRow = document.getElementById("queueRow");
@@ -29,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(
     ["recruiterName", "webhookUrl", "workingServerUrl", "knownRecruiters"],
     (res) => {
-      recruiterInput.value = res.recruiterName || "Suhani";
+      recruiterInput.value = res.recruiterName || "Suhani Sisodiya";
       const activeUrl = res.webhookUrl || res.workingServerUrl || DEFAULT_URL;
       webhookInput.value = activeUrl;
 
@@ -105,52 +103,17 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // "Check Connection & Test Sync" button
-  testCheckBtn.addEventListener("click", () => {
-    testCheckBtn.disabled = true;
-    testStatus.textContent = "Testing connection...";
-    testStatus.style.color = "#2563eb";
-
-    const startTime = Date.now();
-    const activeUrl = webhookInput.value.trim() || DEFAULT_URL;
-
-    chrome.runtime.sendMessage(
-      { action: "TEST_VERIFY", url: activeUrl, recruiter: recruiterInput.value.trim() || "Suhani" },
-      (res) => {
-        testCheckBtn.disabled = false;
-        const latency = Date.now() - startTime;
-
-        if (res && res.success) {
-          setOnlineState(true, res.info);
-          testStatus.textContent = `✓ Perfect! Response in ${latency}ms. Sync is working properly.`;
-          testStatus.style.color = "#059669";
-        } else {
-          setOnlineState(false);
-          testStatus.textContent = "✗ Server unreachable. Please ensure CRM server is started.";
-          testStatus.style.color = "#dc2626";
-        }
-
-        setTimeout(() => {
-          if (testStatus.textContent.includes("Perfect!")) {
-            testStatus.textContent = "";
-          }
-        }, 5000);
-      }
-    );
-  });
-
   // Save Preferences
   saveBtn.addEventListener("click", () => {
-    const recruiterName = recruiterInput.value.trim() || "Suhani";
+    const recruiterName = recruiterInput.value.trim() || "Suhani Sisodiya";
     const webhookUrl = webhookInput.value.trim() || DEFAULT_URL;
 
     chrome.storage.local.set(
       { recruiterName, webhookUrl, workingServerUrl: webhookUrl },
       () => {
-        testStatus.textContent = `✓ Saved recruiter: ${recruiterName}`;
-        testStatus.style.color = "#059669";
+        saveBtn.textContent = `✓ Saved (${recruiterName})`;
+        setTimeout(() => { saveBtn.textContent = "Save Settings"; }, 2500);
         verifyServer(webhookUrl);
-        setTimeout(() => { testStatus.textContent = ""; }, 3000);
       }
     );
   });

@@ -183,6 +183,7 @@ async function syncKnownLeadsFromServer(webhookUrl) {
         await chrome.storage.local.set({
           knownPhones: data.phones || [],
           knownEmails: data.emails || [],
+          knownCandidateNames: data.candidateNames || [],
           knownRecruiters: data.recruiters || []
         });
       }
@@ -303,6 +304,25 @@ async function postLeadDirect(webhookUrl, payload, allowQueueOnFail = true) {
   }
 }
 
+function forceInjectOpenTabs() {
+  try {
+    if (!chrome?.tabs?.query || !chrome?.scripting?.executeScript) return;
+    chrome.tabs.query({ url: ["https://web.whatsapp.com/*", "https://mail.google.com/*"] }, (tabs) => {
+      if (Array.isArray(tabs)) {
+        tabs.forEach(t => {
+          if (t && t.id && t.url) {
+            const file = t.url.includes("web.whatsapp.com") ? "content.js" : "gmail.js";
+            chrome.scripting.executeScript({
+              target: { tabId: t.id },
+              files: [file]
+            }).catch(() => {});
+          }
+        });
+      }
+    });
+  } catch (e) {}
+}
+
 function wakeSyncTabs() {
   try {
     if (!chrome?.tabs?.query) return;
@@ -310,12 +330,30 @@ function wakeSyncTabs() {
       if (Array.isArray(tabs)) {
         tabs.forEach(t => {
           if (t && t.id) {
-            chrome.tabs.sendMessage(t.id, { action: "TRIGGER_SYNC_SCAN" }).catch(() => {});
+            chrome.tabs.sendMessage(t.id, { action: "TRIGGER_SYNC_SCAN" }).catch(() => {
+              // Auto-reinject content script if tab was already open before extension load/reload
+              if (chrome?.scripting?.executeScript && t.url) {
+                const file = t.url.includes("web.whatsapp.com") ? "content.js" : "gmail.js";
+                chrome.scripting.executeScript({
+                  target: { tabId: t.id },
+                  files: [file]
+                }).catch(() => {});
+              }
+            });
           }
         });
       }
     });
   } catch (e) {}
+}
+
+if (chrome?.runtime?.onInstalled) {
+  chrome.runtime.onInstalled.addListener(() => {
+    autoCatchServerUrl().then(() => {
+      forceInjectOpenTabs();
+      flushPendingQueue();
+    });
+  });
 }
 
 // Background Alarms: Keep connection warm, sync known leads, flush offline queue, and wake tabs every 1 minute
@@ -333,8 +371,9 @@ try {
 
 // Startup hook
 autoCatchServerUrl().then(() => {
+  forceInjectOpenTabs();
   flushPendingQueue();
-  setTimeout(wakeSyncTabs, 2000);
+  setTimeout(wakeSyncTabs, 1200);
 });
 
 // Message Dispatcher
