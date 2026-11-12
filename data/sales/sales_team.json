@@ -1,0 +1,42 @@
+[
+  {
+    "id": "SALES-01",
+    "name": "Jinendra",
+    "phone": "8010264508",
+    "phones": ["8010264508"],
+    "email": "jinendra@orbitouch-hr.com",
+    "emails": ["jinendra@orbitouch-hr.com"],
+    "designation": "Sales Executive",
+    "status": "Active"
+  },
+  {
+    "id": "SALES-02",
+    "name": "Vishal",
+    "phone": "7701969169",
+    "phones": ["7701969169", "9211711371"],
+    "email": "vishal@orbitouch-hr.com",
+    "emails": ["vishal@orbitouch-hr.com"],
+    "designation": "Sales Executive",
+    "status": "Active"
+  },
+  {
+    "id": "SALES-03",
+    "name": "Rahul",
+    "phone": "9211711370",
+    "phones": ["9211711370"],
+    "email": "hello@orbitouch-hr.com",
+    "emails": ["hello@orbitouch-hr.com", "hello@orbitverify.com"],
+    "designation": "Sales Executive",
+    "status": "Active"
+  },
+  {
+    "id": "SALES-04",
+    "name": "Archana",
+    "phone": "9211711376",
+    "phones": ["9211711376"],
+    "email": "archana@orbitouch-hr.com",
+    "emails": ["archana@orbitouch-hr.com", "archana@orbitverify.com"],
+    "designation": "Sales Executive",
+    "status": "Active"
+  }
+]

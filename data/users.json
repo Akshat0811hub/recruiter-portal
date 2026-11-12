@@ -2,135 +2,105 @@
   {
     "id": "USR-001",
     "username": "admin",
-    "password": "Akshat@123#",
+    "password": "admin@123",
     "name": "Super Admin",
     "role": "admin",
-    "email": "admin@orbitouch-hr.com"
+    "email": "admin@company.com"
+  },
+  {
+    "id": "USR-002",
+    "username": "tl",
+    "password": "tl@123",
+    "name": "Team Leader (Vikram)",
+    "role": "team_leader",
+    "email": "tl@company.com"
   },
   {
     "id": "USR-101",
-    "username": "pooja",
-    "password": "Pooja@123",
-    "name": "Pooja Singh",
+    "username": "suhani",
+    "password": "suhani@123",
+    "name": "Suhani",
     "role": "recruiter",
-    "email": "pooja@orbitouch-hr.com",
-    "phone": "9211711379"
+    "email": "suhani@company.com"
   },
   {
     "id": "USR-102",
-    "username": "jyoti",
-    "password": "Jyoti@123",
-    "name": "Jyoti Shah",
+    "username": "rahul",
+    "password": "rahul@123",
+    "name": "Rahul",
     "role": "recruiter",
-    "email": "jyoti.shah@orbitouch-hr.com",
-    "phone": "9211711373"
+    "email": "rahul@company.com"
   },
   {
     "id": "USR-103",
-    "username": "suhani",
-    "password": "Suhani@123",
-    "name": "Suhani Sisodiya",
+    "username": "pooja",
+    "password": "pooja@123",
+    "name": "Pooja",
     "role": "recruiter",
-    "email": "suhani@orbitouch-hr.com",
-    "phone": "7428890976"
+    "email": "pooja@company.com"
   },
   {
     "id": "USR-104",
-    "username": "akshay",
-    "password": "Akshay@123",
-    "name": "Akshay Pandey",
+    "username": "amit",
+    "password": "amit@123",
+    "name": "Amit",
     "role": "recruiter",
-    "email": "akshay@orbitouch-hr.com",
-    "phone": "9211711369"
+    "email": "amit@company.com"
   },
   {
     "id": "USR-105",
-    "username": "munisha",
-    "password": "Munisha@123",
-    "name": "Munisha Thakur",
+    "username": "neha",
+    "password": "neha@123",
+    "name": "Neha",
     "role": "recruiter",
-    "email": "munisha@orbitouch-hr.com",
-    "phone": "9211711367"
+    "email": "neha@company.com"
   },
   {
     "id": "USR-106",
-    "username": "sakshi",
-    "password": "Sakshi@123",
-    "name": "Sakshi Kaur",
+    "username": "vikram_rec",
+    "password": "vikram@123",
+    "name": "Vikram",
     "role": "recruiter",
-    "email": "sakshi@orbitouch-hr.com",
-    "phone": "9266128957"
+    "email": "vikram@company.com"
   },
   {
     "id": "USR-107",
-    "username": "akshita",
-    "password": "Akshita@123",
-    "name": "Akshita Nayal",
+    "username": "anjali",
+    "password": "anjali@123",
+    "name": "Anjali",
     "role": "recruiter",
-    "email": "akshita@orbitouch-hr.com",
-    "phone": "7303439933"
+    "email": "anjali@company.com"
   },
   {
     "id": "USR-108",
-    "username": "divanshi",
-    "password": "Divanshi@123",
-    "name": "Divanshi Gupta",
+    "username": "rohan",
+    "password": "rohan@123",
+    "name": "Rohan",
     "role": "recruiter",
-    "email": "divanshi@orbitouch-hr.com",
-    "phone": "9289321002"
+    "email": "rohan@company.com"
   },
   {
     "id": "USR-109",
-    "username": "gunjan",
-    "password": "Gunjan@123",
-    "name": "Gunjan Sharma",
+    "username": "kavita",
+    "password": "kavita@123",
+    "name": "Kavita",
     "role": "recruiter",
-    "email": "gunjan@orbitouch-hr.com",
-    "phone": "9266128964"
+    "email": "kavita@company.com"
   },
   {
     "id": "USR-110",
-    "username": "kamakshi",
-    "password": "Kamakshi@123",
-    "name": "Kamakshi Kaushik",
+    "username": "deepak",
+    "password": "deepak@123",
+    "name": "Deepak",
     "role": "recruiter",
-    "email": "kamakshi@orbitouch-hr.com",
-    "phone": "9211711372"
+    "email": "deepak@company.com"
   },
   {
     "id": "USR-111",
-    "username": "manshi",
-    "password": "Manshi@123",
-    "name": "Manshi Agnihotri",
+    "username": "Suhani Sisodiya",
+    "password": "suhani@123",
+    "name": "Suhani Sisodiya",
     "role": "recruiter",
-    "email": "manshi@orbitouch-hr.com",
-    "phone": "9266128961"
-  },
-  {
-    "id": "USR-112",
-    "username": "shriparna",
-    "password": "Shriparna@123",
-    "name": "Shriparna Acharya",
-    "role": "recruiter",
-    "email": "shriparna@orbitouch-hr.com",
-    "phone": "9211711378"
-  },
-  {
-    "id": "USR-113",
-    "username": "neetu",
-    "password": "Neetu@123",
-    "name": "Neetu Sharma",
-    "role": "recruiter",
-    "email": "neetu@orbitouch-hr.com",
-    "phone": "9773895027"
-  },
-  {
-    "id": "USR-114",
-    "username": "neetu.sharma",
-    "password": "Neetu@123",
-    "name": "Neetu Sharma",
-    "role": "recruiter",
-    "email": "neetu.sharma@orbitouch-hr.com",
-    "phone": "9289321004"
+    "email": "suhani@company.com"
   }
 ]

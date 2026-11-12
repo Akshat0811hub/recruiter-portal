@@ -241,20 +241,18 @@
       <div class="card-sub">Select the recruiter assigned to this mobile device.</div>
       <label for="recruiterSelect">Assigned Recruiter</label>
       <select id="recruiterSelect" onchange="updateUrls()">
-        <option value="Pooja Singh">Pooja Singh</option>
-        <option value="Jyoti Shah">Jyoti Shah</option>
-        <option value="Suhani Sisodiya" selected>Suhani Sisodiya</option>
-        <option value="Akshay Pandey">Akshay Pandey</option>
-        <option value="Munisha Thakur">Munisha Thakur</option>
-        <option value="Sakshi Kaur">Sakshi Kaur</option>
-        <option value="Akshita Nayal">Akshita Nayal</option>
-        <option value="Divanshi Gupta">Divanshi Gupta</option>
-        <option value="Gunjan Sharma">Gunjan Sharma</option>
-        <option value="Kamakshi Kaushik">Kamakshi Kaushik</option>
-        <option value="Manshi Agnihotri">Manshi Agnihotri</option>
-        <option value="Shriparna Acharya">Shriparna Acharya</option>
-        <option value="Neetu Sharma">Neetu Sharma</option>
-        <option value="Neetu Sharma (Alt)">Neetu Sharma (Alt)</option>
+        <option value="Suhani">Suhani</option>
+        <option value="Rahul">Rahul</option>
+        <option value="Pooja">Pooja</option>
+        <option value="Amit">Amit</option>
+        <option value="Neha">Neha</option>
+        <option value="Vikram">Vikram</option>
+        <option value="Anjali">Anjali</option>
+        <option value="Rohan">Rohan</option>
+        <option value="Kavita">Kavita</option>
+        <option value="Deepak">Deepak</option>
+        <option value="Kajal">Kajal</option>
+        <option value="Suhani Sisodiya">Suhani Sisodiya</option>
       </select>
     </div>
 
@@ -291,7 +289,7 @@
 
       <div class="endpoint-group">
         <div class="endpoint-head">
-          <span>Incoming Call (Ringing) Payload</span>
+          <span>Incoming Call Payload</span>
           <span class="trigger-tag">Call Incoming</span>
         </div>
         <div class="copy-field">
@@ -302,18 +300,7 @@
 
       <div class="endpoint-group">
         <div class="endpoint-head">
-          <span>Outgoing Call (Dialing) Payload (Optional)</span>
-          <span class="trigger-tag">Call Outgoing</span>
-        </div>
-        <div class="copy-field">
-          <input type="text" class="mono-input" id="bodyDial" readonly>
-          <button class="btn-copy" onclick="copyField('bodyDial')"><i class="fa-regular fa-copy"></i> Copy</button>
-        </div>
-      </div>
-
-      <div class="endpoint-group">
-        <div class="endpoint-head">
-          <span>Call Answered / Active Payload</span>
+          <span>Call Answered Payload</span>
           <span class="trigger-tag">Call Active</span>
         </div>
         <div class="copy-field">
@@ -371,9 +358,7 @@
 
     function updateUrls() {
       const rec = document.getElementById('recruiterSelect').value || 'Suhani';
-      document.getElementById('bodyRing').value = 'event=ringing&dir=incoming&recruiter=' + rec + '&phone={call_number}&name={call_name}';
-      const dialEl = document.getElementById('bodyDial');
-      if (dialEl) dialEl.value = 'event=dialing&dir=outgoing&recruiter=' + rec + '&phone={call_number}&name={call_name}';
+      document.getElementById('bodyRing').value = 'event=ringing&recruiter=' + rec + '&phone={call_number}&name={call_name}';
       document.getElementById('bodyStart').value = 'event=started&recruiter=' + rec + '&phone={call_number}&name={call_name}';
       document.getElementById('bodyEnd').value = 'event=ended&recruiter=' + rec + '&phone={call_number}&name={call_name}';
     }

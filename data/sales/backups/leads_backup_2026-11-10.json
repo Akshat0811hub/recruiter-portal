@@ -1,0 +1,53 @@
+[
+  {
+    "id": "DEAL-30939474",
+    "timestamp": "2026-11-10 14:48:29",
+    "lastUpdated": "2026-11-10 14:48:29",
+    "dateKey": "2026-11-10",
+    "activityDates": [
+      "2026-11-10"
+    ],
+    "recruiter": "Jinendra",
+    "channel": "WhatsApp",
+    "category": "BGV / Verification Lead",
+    "candidateName": "Rajesh Kumar (TechCorp Pvt Ltd)",
+    "phone": "+91 9876543210",
+    "email": "",
+    "currentCtc": "",
+    "expectedCtc": "",
+    "noticePeriod": "",
+    "skills": "Sales Enquiry",
+    "keywords": [
+      "background verification",
+      "verification"
+    ],
+    "whatsappTranscript": "[Sales - Jinendra (11:30 AM)]: Hi Jinendra, need background verification for 150 candidates. Please share rate card.",
+    "emailTranscript": "",
+    "messageHistory": [
+      {
+        "id": "MSG-1794302309395-640-0",
+        "leadId": "DEAL-30939474",
+        "dateKey": "2026-11-10",
+        "timestamp": "2026-11-10 14:48:29",
+        "msgTime": "11:30 AM",
+        "channel": "WhatsApp",
+        "salesPerson": "Jinendra",
+        "clientName": "Rajesh Kumar (TechCorp Pvt Ltd)",
+        "clientPhone": "+91 9876543210",
+        "clientEmail": "",
+        "senderRole": "sales",
+        "senderName": "Jinendra",
+        "subject": "",
+        "text": "Hi Jinendra, need background verification for 150 candidates. Please share rate card."
+      }
+    ],
+    "callHistory": [],
+    "lastCall": null,
+    "callDuration": "",
+    "rawText": "[Sales - Jinendra (11:30 AM)]: Hi Jinendra, need background verification for 150 candidates. Please share rate card.",
+    "followUpNeeded": false,
+    "followUpDate": "",
+    "recruiterNotes": "",
+    "status": "New Lead"
+  }
+]

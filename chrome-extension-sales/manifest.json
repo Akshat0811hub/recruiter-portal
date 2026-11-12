@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "OrbitSales CRM Turbo Sync (WhatsApp + Gmail)",
+  "version": "4.0.0",
+  "description": "Millisecond real-time WhatsApp Web and Gmail 100% zero-loss message synchronization for OrbitSales CRM.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "https://web.whatsapp.com/*",
+    "https://mail.google.com/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "OrbitSales CRM Turbo Sync"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["gmail.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,15 +1,11 @@
 $ErrorActionPreference = "SilentlyContinue"
-$createdNew = $false
-$mutex = New-Object System.Threading.Mutex($true, "Global\RecruiterCRMAutoWatchdog", [ref]$createdNew)
-if (-not $createdNew) {
-  exit 0
-}
 
 $workDir = "c:\Users\D552266\Desktop\Recruiter-portal"
 $nodeCmd = "C:\Users\D552266\AppData\Roaming\Antigravity\bin\agy-node.cmd"
 $logFile = Join-Path $workDir "data\server-autostart.log"
 
 Set-Location $workDir
+$env:PORT = "3000"
 
 while ($true) {
   $listening = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue

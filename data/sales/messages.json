@@ -1,0 +1,34 @@
+[
+  {
+    "id": "MSG-1794302309408-327-1",
+    "leadId": "DEAL-30939474",
+    "dateKey": "2026-11-10",
+    "timestamp": "2026-11-10 14:48:29",
+    "msgTime": "11:32 AM",
+    "channel": "WhatsApp",
+    "salesPerson": "Jinendra",
+    "clientName": "Rajesh Kumar (TechCorp Pvt Ltd)",
+    "clientPhone": "+91 9876543210",
+    "clientEmail": "",
+    "senderRole": "sales",
+    "senderName": "Jinendra",
+    "subject": "",
+    "text": "Hello Rajesh sir! Sure, sending our BGV proposal and rate card on email."
+  },
+  {
+    "id": "MSG-1794302309395-640-0",
+    "leadId": "DEAL-30939474",
+    "dateKey": "2026-11-10",
+    "timestamp": "2026-11-10 14:48:29",
+    "msgTime": "11:30 AM",
+    "channel": "WhatsApp",
+    "salesPerson": "Jinendra",
+    "clientName": "Rajesh Kumar (TechCorp Pvt Ltd)",
+    "clientPhone": "+91 9876543210",
+    "clientEmail": "",
+    "senderRole": "sales",
+    "senderName": "Jinendra",
+    "subject": "",
+    "text": "Hi Jinendra, need background verification for 150 candidates. Please share rate card."
+  }
+]

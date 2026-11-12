@@ -1,0 +1,55 @@
+[
+  {
+    "id": "USR-001",
+    "username": "admin",
+    "password": "Akshat@123#",
+    "name": "Super Admin",
+    "role": "admin",
+    "email": "admin@orbitouch-hr.com",
+    "phone": ""
+  },
+  {
+    "id": "USR-101",
+    "username": "jinendra",
+    "password": "Jinendra@123",
+    "name": "Jinendra",
+    "role": "sales",
+    "email": "jinendra@orbitouch-hr.com",
+    "emails": ["jinendra@orbitouch-hr.com"],
+    "phone": "8010264508",
+    "phones": ["8010264508"]
+  },
+  {
+    "id": "USR-102",
+    "username": "vishal",
+    "password": "Vishal@123",
+    "name": "Vishal",
+    "role": "sales",
+    "email": "vishal@orbitouch-hr.com",
+    "emails": ["vishal@orbitouch-hr.com"],
+    "phone": "7701969169",
+    "phones": ["7701969169", "9211711371"]
+  },
+  {
+    "id": "USR-103",
+    "username": "rahul",
+    "password": "Rahul@123",
+    "name": "Rahul",
+    "role": "sales",
+    "email": "hello@orbitouch-hr.com",
+    "emails": ["hello@orbitouch-hr.com", "hello@orbitverify.com"],
+    "phone": "9211711370",
+    "phones": ["9211711370"]
+  },
+  {
+    "id": "USR-104",
+    "username": "archana",
+    "password": "Archana@123",
+    "name": "Archana",
+    "role": "sales",
+    "email": "archana@orbitouch-hr.com",
+    "emails": ["archana@orbitouch-hr.com", "archana@orbitverify.com"],
+    "phone": "9211711376",
+    "phones": ["9211711376"]
+  }
+]
