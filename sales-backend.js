@@ -3018,7 +3018,7 @@ async function handleSalesRequest(req, res) {
     }
 
     res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'error', message: 'Endpoint not found' }));
+    res.end(JSON.stringify({ status: 'error', message: `Endpoint not found (${method} ${pathname})` }));
   } catch (err) {
     console.error('[SERVER ERROR]', err);
     if (!res.headersSent) {
