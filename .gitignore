@@ -15,5 +15,7 @@ desktop.ini
 
 # Data backups and local sync cursors
 data/backups/
+data/**/backups/
 data/cloud_sync_cursor.json
+data/**/cloud_sync_cursor.json
 *.tmp

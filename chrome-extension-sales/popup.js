@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const latencyVal = document.getElementById("latencyVal");
   const activeSalesVal = document.getElementById("activeSalesVal");
 
-  const DEFAULT_URL = "http://192.168.1.34:3000/api/webhook";
+  const DEFAULT_URL = "http://localhost:3000/api/sales/webhook";
 
   toggleSettingsBtn.addEventListener("click", () => {
     const isOpen = settingsBox.classList.toggle("open");
@@ -30,7 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const salesPerson = res.recruiterName || "Jinendra";
       recruiterInput.value = salesPerson;
       activeSalesVal.textContent = salesPerson;
-      const activeUrl = res.webhookUrl || res.workingServerUrl || DEFAULT_URL;
+      let activeUrl = res.webhookUrl || res.workingServerUrl || DEFAULT_URL;
+      if (activeUrl.includes("192.168.1.34")) {
+        activeUrl = DEFAULT_URL;
+      }
       webhookInput.value = activeUrl;
       if (res.lastLatencyMs) {
         latencyVal.textContent = `${res.lastLatencyMs}ms`;
@@ -65,17 +68,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function verifyServer(urlToTest) {
+  async function verifyServer(urlToTest) {
     connPill.textContent = "Checking...";
+    connPill.className = "badge-conn";
+
+    let directOk = false;
+    try {
+      const u = new URL(urlToTest || DEFAULT_URL);
+      const pingUrl = `${u.protocol}//${u.host}/api/ping`;
+      const t0 = Date.now();
+      const directRes = await fetch(pingUrl, { signal: AbortSignal.timeout(1500) });
+      if (directRes.ok) {
+        const info = await directRes.json();
+        const latencyMs = Math.max(1, Date.now() - t0);
+        directOk = true;
+        setOnlineState(true, { info, latencyMs, url: urlToTest });
+        chrome.storage.local.set({ webhookUrl: urlToTest, workingServerUrl: urlToTest, lastLatencyMs: latencyMs });
+      }
+    } catch (e) {
+      console.warn("Direct popup ping failed:", e);
+    }
+
     chrome.runtime.sendMessage(
       { action: "DISCOVER_SERVER", preferredUrl: urlToTest },
       (res) => {
+        if (chrome.runtime.lastError) {
+          if (!directOk) setOnlineState(false, null);
+          return;
+        }
         const ok = res && res.success;
-        setOnlineState(ok, res);
-
-        if (ok && res.url) {
-          webhookInput.value = res.url;
-          chrome.storage.local.set({ webhookUrl: res.url, workingServerUrl: res.url });
+        if (ok) {
+          setOnlineState(true, res);
+          if (res.url) {
+            webhookInput.value = res.url;
+            chrome.storage.local.set({ webhookUrl: res.url, workingServerUrl: res.url });
+          }
+        } else if (!directOk) {
+          setOnlineState(false, res);
         }
 
         if (res && res.queueCount > 0) {

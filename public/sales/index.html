@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg-app: #f8fafc;
@@ -1526,69 +1527,53 @@
       50% { opacity: 0.4; transform: scale(1.3); }
     }
 
-    /* Topbar Portal Switcher */
+    /* Topbar Portal Switcher - Sleek Executive Pill */
     .topbar-portal-btn {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 6px 14px;
-      background: linear-gradient(135deg, #ffffff, #f1f5f9);
-      border: 1.5px solid #cbd5e1;
-      border-radius: 10px;
+      gap: 7px;
+      padding: 0 10px;
+      height: 32px;
+      border-radius: 8px;
       text-decoration: none;
-      color: #1e293b;
-      margin-left: 14px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
+      font-size: 11.5px;
+      font-weight: 600;
+      transition: all 0.2s ease;
       cursor: pointer;
+      white-space: nowrap;
     }
-    .topbar-portal-btn:hover {
-      background: #ffffff;
+    .btn-sales-jump {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .btn-sales-jump:hover {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);
+    }
+    .btn-recruiter-jump {
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+    }
+    .btn-recruiter-jump:hover {
+      background: #e0e7ff;
       border-color: #6366f1;
       transform: translateY(-1px);
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);
     }
-    .topbar-portal-btn .btn-icon-wrap {
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      background: #4f46e5;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-    }
-    .btn-sales-jump .btn-icon-wrap { background: #d97706; }
-    .btn-recruiter-jump .btn-icon-wrap { background: #4f46e5; }
-    .topbar-portal-btn .btn-text-wrap {
-      display: flex;
-      flex-direction: column;
-      text-align: left;
-      line-height: 1.15;
-    }
-    .topbar-portal-btn .btn-sub {
-      font-size: 8.5px;
-      font-weight: 800;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      color: #64748b;
-    }
-    .topbar-portal-btn .btn-main {
-      font-size: 12px;
-      font-weight: 700;
-      color: #0f172a;
-    }
+    .topbar-portal-btn i { font-size: 11.5px; }
     .topbar-portal-btn .shortcut-pill {
-      font-size: 9.5px;
-      font-family: inherit;
+      font-size: 9px;
       font-weight: 700;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
+      padding: 1.5px 5px;
       border-radius: 4px;
-      padding: 2px 5px;
-      color: #64748b;
-      margin-left: 4px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid currentColor;
+      opacity: 0.85;
+      margin-left: 2px;
     }
 
 </style>
@@ -1812,55 +1797,71 @@
               <i class="fa-solid fa-bars"></i>
             </button>
             <h1 class="page-heading" id="activeViewHeading">Client Deals & Pipeline</h1>
-            <!-- EXECUTIVE TOPBAR PORTAL SWITCHER BUTTON -->
-            <a href="/" id="topbarPortalBtn" onclick="syncAdminSessionToRecruiter(event)" class="topbar-portal-btn btn-recruiter-jump" title="Click or press Alt+R to switch to Recruiter CRM">
-              <span class="btn-icon-wrap"><i class="fa-solid fa-user-group"></i></span>
-              <span class="btn-text-wrap">
-                <span class="btn-sub">CRM WORKSPACE</span>
-                <span class="btn-main">&larr; Switch to Recruiter CRM</span>
-              </span>
-              <kbd class="shortcut-pill">Alt+R</kbd>
-            </a>
-            <!-- Admin Dual Dashboard Switcher -->
-            
             <span id="dayModeBadge" class="day-mode-chip chip-live-today">
               <i class="fa-solid fa-circle" style="font-size:6px;"></i> Live Today
             </span>
+
+            <div class="topbar-v-divider"></div>
+
+            <!-- EXECUTIVE TOPBAR PORTAL SWITCHER BUTTON -->
+            <a href="/" id="topbarPortalBtn" onclick="syncAdminSessionToRecruiter(event)" class="topbar-portal-btn btn-recruiter-jump" title="Click or press Alt+R to switch to Recruiter CRM">
+              <i class="fa-solid fa-user-group"></i>
+              <span>Recruiter CRM</span>
+              <kbd class="shortcut-pill">Alt+R</kbd>
+            </a>
           </div>
 
           <div class="topbar-right">
-            <!-- Date Navigation -->
-            <div class="date-segmented">
-              <button class="btn-date-step" onclick="shiftSelectedDay(-1)" title="Previous Day">
-                <i class="fa-solid fa-chevron-left"></i>
-              </button>
-              <input type="date" id="datePickerInput" class="date-picker-clean" onchange="onDatePickerChange(this.value)" title="Select Date">
-              <button class="btn-date-step" id="nextDayBtn" onclick="shiftSelectedDay(1)" title="Next Day">
-                <i class="fa-solid fa-chevron-right"></i>
+            <!-- Group 1: Calendar & Date Stepper -->
+            <div class="topbar-control-group">
+              <div class="date-segmented">
+                <button class="btn-date-step" onclick="shiftSelectedDay(-1)" title="Previous Day">
+                  <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <input type="date" id="datePickerInput" class="date-picker-clean" onchange="onDatePickerChange(this.value)" title="Select Date">
+                <button class="btn-date-step" id="nextDayBtn" onclick="shiftSelectedDay(1)" title="Next Day">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+
+              <select id="historyDayDropdown" class="history-select" onchange="onHistoryDropdownChange(this.value)" title="Browse Activity History">
+                <option value="">Activity History</option>
+              </select>
+
+              <button class="btn-today-reset" id="jumpTodayBtn" onclick="jumpToToday()">
+                <i class="fa-solid fa-rotate-left"></i> Today
               </button>
             </div>
 
-            <select id="historyDayDropdown" class="history-select" onchange="onHistoryDropdownChange(this.value)" title="Browse Activity History">
-              <option value="">Activity History</option>
-            </select>
+            <div class="topbar-v-divider"></div>
 
-            <button class="btn-today-reset" id="jumpTodayBtn" onclick="jumpToToday()">
-              <i class="fa-solid fa-rotate-left"></i> Today
-            </button>
-
-            <!-- Admin / Team Lead Sales Executive Switcher -->
+            <!-- Group 2: Admin / Team Lead Sales Executive Filter -->
             <div class="salesperson-switcher" id="adminSalesExecutiveFilterBox">
-              <i class="fa-solid fa-filter"></i>
+              <i class="fa-solid fa-user-gear"></i>
               <select id="teamSalesExecutiveSelect" onchange="onSalesExecutiveFilterChange()">
                 <option value="All">All Sales Executives</option>
               </select>
             </div>
 
-            <!-- Live IST Clock -->
+            <div class="topbar-v-divider"></div>
+
+            <!-- Group 3: Live IST System Clock -->
             <div class="clock-badge" title="Indian Standard Time — Auto-resets daily at 12:00 AM">
               <span class="live-pulse-dot"></span>
               <span id="liveClockText">--:--:--</span>
             </div>
+
+            <div class="topbar-v-divider"></div>
+
+            <!-- Import Excel / CSV Button -->
+            <button type="button" class="btn-ui btn-ui-secondary" onclick="openImportModal()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 13px; border-radius:7px; cursor:pointer; background:#fff; border:1px solid #10b981; color:#047857; box-shadow:0 1px 3px rgba(16,185,129,0.15);">
+              <i class="fa-solid fa-file-excel" style="color:#10b981; font-size:14px;"></i> Import Excel
+            </button>
+
+            <!-- Manual Deal / Client Entry Button -->
+            <button type="button" class="btn-ui btn-ui-primary" onclick="openManualDealModal()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 14px; background:linear-gradient(135deg, #d97706, #b45309); color:#fff; border:none; border-radius:7px; box-shadow:0 2px 6px rgba(217,119,6,0.3); cursor:pointer;">
+              <i class="fa-solid fa-plus"></i> Manual Entry
+            </button>
           </div>
         </header>
 
@@ -1960,6 +1961,14 @@
 
                 <button class="btn-ui btn-ui-secondary" onclick="exportLeadCSV()">
                   <i class="fa-solid fa-download"></i> Export CSV
+                </button>
+
+                <button type="button" class="btn-ui btn-ui-secondary" onclick="openImportModal()" style="border-color:#10b981; color:#047857; display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+                  <i class="fa-solid fa-file-excel" style="color:#10b981;"></i> Import Excel / CSV
+                </button>
+
+                <button type="button" class="btn-ui btn-ui-primary" onclick="openManualDealModal()" style="background:linear-gradient(135deg, #d97706, #b45309); color:#fff; border:none; display:inline-flex; align-items:center; gap:6px;">
+                  <i class="fa-solid fa-handshake"></i> + Add Client / Deal
                 </button>
               </div>
             </div>
@@ -2423,6 +2432,267 @@
           <button class="btn-ui btn-ui-secondary" onclick="closeModal('callLogModal')">Cancel</button>
           <button class="btn-ui btn-ui-primary" id="submitCallLogBtn" onclick="submitCallLog()">
             <i class="fa-solid fa-check"></i> Save Call
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MANUAL CLIENT / DEAL ENTRY MODAL ==================== -->
+  <div class="modal-overlay" id="manualDealModal" onclick="if(event.target===this) closeModal('manualDealModal')">
+    <div class="modal-box" style="max-width:560px;">
+      <div class="modal-head">
+        <div>
+          <div style="font-size:16px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-briefcase" style="color:#d97706;"></i> Manual Client / Deal Entry
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Add corporate client, service requirement &amp; deal details directly</div>
+        </div>
+        <button class="btn-close-x" onclick="closeModal('manualDealModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-content" style="max-height:75vh; overflow-y:auto;">
+        <div class="form-grid-2">
+          <div class="field-block">
+            <label>Client / Contact Person *</label>
+            <input type="text" id="manDealClientName" placeholder="e.g. Rajesh Kumar (HR Head)" required>
+          </div>
+          <div class="field-block">
+            <label>Company / Organization Name *</label>
+            <input type="text" id="manDealCompany" placeholder="e.g. TechCorp Solutions Pvt Ltd" required>
+          </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:10px;">
+          <div class="field-block">
+            <label>Client Phone Number *</label>
+            <input type="text" id="manDealPhone" placeholder="e.g. 9876543210" required>
+          </div>
+          <div class="field-block">
+            <label>Client Email Address</label>
+            <input type="email" id="manDealEmail" placeholder="e.g. rajesh@techcorp.com">
+          </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:10px;">
+          <div class="field-block">
+            <label>Service Required ("Isko kya chahiye") *</label>
+            <select id="manDealService">
+              <option value="Background Verification (BGV)">Background Verification (BGV)</option>
+              <option value="IT & Non-IT Recruitment">IT & Non-IT Recruitment</option>
+              <option value="Executive Search / Leadership">Executive Search / Leadership</option>
+              <option value="Bulk Hiring / Staffing">Bulk Hiring / Staffing</option>
+              <option value="Payroll & Compliance Outsourcing">Payroll & Compliance Outsourcing</option>
+              <option value="Corporate HR Consultation">Corporate HR Consultation</option>
+              <option value="Other Service">Other Corporate Service</option>
+            </select>
+          </div>
+          <div class="field-block">
+            <label>Deal Value / Commercials</label>
+            <input type="text" id="manDealValue" placeholder="e.g. ₹50,000 / 50 seats @ ₹650">
+          </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:10px;">
+          <div class="field-block">
+            <label>Assigned Sales Executive (Owner)</label>
+            <select id="manDealSalesperson">
+              <option value="Jinendra">Jinendra (8010264508)</option>
+              <option value="Vishal">Vishal (7701969169)</option>
+              <option value="Rahul">Rahul (9211711370)</option>
+              <option value="Archana">Archana (9211711376)</option>
+            </select>
+          </div>
+          <div class="field-block">
+            <label>Deal Pipeline Stage</label>
+            <select id="manDealStatus">
+              <option value="New Lead">New Lead</option>
+              <option value="Contacted">Discussion In Progress</option>
+              <option value="Proposal Sent">Proposal Sent</option>
+              <option value="Shortlisted">Agreement Sent</option>
+              <option value="Interview Scheduled">Commercials Finalized</option>
+              <option value="Selected">Deal Won (Client Signed)</option>
+              <option value="Follow-up">Follow-up</option>
+              <option value="Rejected">Lost / Dropped</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:10px;">
+          <div class="field-block">
+            <label>Lead Category</label>
+            <select id="manDealCategory">
+              <option value="Client / Employer Lead">Client / Employer Lead</option>
+              <option value="Corporate Partnership">Corporate Partnership</option>
+              <option value="General Enquiry">General Enquiry</option>
+            </select>
+          </div>
+          <div class="field-block">
+            <label>Source / Channel</label>
+            <select id="manDealChannel">
+              <option value="Manual">Manual Entry</option>
+              <option value="Direct Call">Direct Phone Call</option>
+              <option value="Meeting">In-Person Meeting</option>
+              <option value="Referral">Client Referral</option>
+              <option value="LinkedIn">LinkedIn Outreach</option>
+              <option value="WhatsApp">WhatsApp</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-block" style="margin-top:10px;">
+          <label>Meeting / Discussion Notes ("Baat Kya Hui / Client Requirement") *</label>
+          <textarea id="manDealNotes" rows="3" placeholder="Enter full details: Ye client tha, isko 50 seats ke liye BGV verify karwana hai, rate ₹650 decide hua, kal agreement send karenge blah blah..." style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:13px; font-family:inherit; resize:vertical;"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+          <button type="button" class="btn-ui btn-ui-secondary" onclick="closeModal('manualDealModal')">Cancel</button>
+          <button type="button" class="btn-ui btn-ui-primary" id="btnSubmitManualDeal" onclick="submitManualDeal()" style="background:linear-gradient(135deg, #d97706, #b45309); color:#fff; border:none;">
+            <i class="fa-solid fa-check"></i> Save Deal Entry
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EXCEL / CSV DEALS IMPORT MODAL ==================== -->
+  <div class="modal-overlay" id="importModal" onclick="if(event.target===this) closeModal('importModal')">
+    <div class="modal-box" style="max-width:760px; width:95%;">
+      <div class="modal-head">
+        <div>
+          <div style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-file-excel" style="color:#10b981;"></i>
+            <span>Import Clients / Deals from Excel or CSV</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Upload your spreadsheet (.xlsx, .xls, .csv). Fields will be auto-detected and mapped into Sales CRM automatically.</div>
+        </div>
+        <button class="btn-close-x" onclick="closeModal('importModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-content" style="max-height:78vh; overflow-y:auto; padding:18px;">
+        <!-- DROPZONE -->
+        <div id="importDropzone" style="border:2px dashed #cbd5e1; border-radius:10px; padding:24px; text-align:center; background:#f8fafc; cursor:pointer; transition:all 0.2s;" onclick="document.getElementById('importFileInput').click()" ondragover="event.preventDefault(); this.style.borderColor='#10b981'; this.style.background='#ecfdf5';" ondragleave="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';" ondrop="handleImportDrop(event)">
+          <input type="file" id="importFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="if(this.files &amp;&amp; this.files[0]) handleImportFile(this.files[0])">
+          <i class="fa-solid fa-cloud-arrow-up" style="font-size:36px; color:#10b981; margin-bottom:10px;"></i>
+          <div style="font-size:14px; font-weight:600; color:#1e293b;">Click to browse or Drag &amp; Drop your Excel / CSV file here</div>
+          <div style="font-size:12px; color:#64748b; margin-top:4px;">Supports .xlsx, .xls, .csv files (Handles split First &amp; Last Names, Phone, Company, Email etc.)</div>
+        </div>
+
+        <!-- FILE INFO BANNER -->
+        <div id="importFileInfo" style="display:none; margin-top:14px; padding:10px 14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fa-solid fa-file-circle-check" style="color:#10b981; font-size:18px;"></i>
+            <div>
+              <span id="importFileName" style="font-weight:600; color:#166534; font-size:13px;">file.xlsx</span>
+              <span id="importRowCount" style="margin-left:8px; font-size:11.5px; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; font-weight:600;">0 rows</span>
+            </div>
+          </div>
+          <button type="button" class="btn-ui btn-ui-secondary" style="font-size:11.5px; padding:3px 10px;" onclick="resetImportFile()"><i class="fa-solid fa-rotate-right"></i> Choose Other File</button>
+        </div>
+
+        <!-- DEFAULT OWNER & STATUS CONFIG -->
+        <div id="importConfigSection" style="display:none; margin-top:14px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px;">
+          <div style="font-size:13px; font-weight:700; color:#0f172a; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-sliders" style="color:#d97706;"></i> Default Assignment Settings
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label style="font-size:11.5px; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Default Salesperson (If not assigned in sheet)</label>
+              <select id="importDefaultSalesperson" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:6px 9px; font-size:12.5px; font-family:inherit;">
+                <option value="Jinendra">Jinendra</option>
+                <option value="Vishal">Vishal</option>
+                <option value="Rahul">Rahul</option>
+                <option value="Archana">Archana</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11.5px; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Default Pipeline Stage</label>
+              <select id="importDefaultStatus" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:6px 9px; font-size:12.5px; font-family:inherit;">
+                <option value="NEW_LEAD">New Lead (Initial Pipeline)</option>
+                <option value="CONTACTED">Contacted / In Discussion</option>
+                <option value="REQUIREMENT_GATHERED">Requirement Gathered</option>
+                <option value="PROPOSAL_SENT">Proposal / Quotation Sent</option>
+                <option value="NEGOTIATION">Under Negotiation</option>
+                <option value="CLOSED_WON">Closed Deal / Won</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMN MAPPING ACCORDION -->
+        <div id="importMappingSection" style="display:none; margin-top:14px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleImportMapping()">
+            <div style="font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-table-columns" style="color:#0284c7;"></i> Detected Column Mapping
+              <span style="font-size:11px; background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:10px; font-weight:600;">Auto-Mapped</span>
+            </div>
+            <span id="importMappingToggleIcon" style="font-size:12px; color:#64748b;"><i class="fa-solid fa-chevron-down"></i></span>
+          </div>
+
+          <div id="importMappingBody" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Client / Contact Person</label>
+              <select id="mapColName" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Company Name</label>
+              <select id="mapColCompany" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Phone Number *</label>
+              <select id="mapColPhone" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Email Address</label>
+              <select id="mapColEmail" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Service Required / Role</label>
+              <select id="mapColService" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Deal Value / Budget / Commercials</label>
+              <select id="mapColDealValue" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Salesperson Owner Column</label>
+              <select id="mapColSalesperson" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Notes / Source / Discussion</label>
+              <select id="mapColNotes" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVE PREVIEW TABLE -->
+        <div id="importPreviewSection" style="display:none; margin-top:14px;">
+          <div style="font-size:12.5px; font-weight:700; color:#334155; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+            <span><i class="fa-solid fa-eye" style="color:#d97706;"></i> Live Preview (First 5 Rows to be imported)</span>
+            <span style="font-size:11px; color:#64748b;">Review before submitting</span>
+          </div>
+          <div style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px; max-height:220px;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+              <thead style="background:#f1f5f9; position:sticky; top:0;">
+                <tr>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Client</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Company</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Phone</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Email</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Service / Requirement</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Salesperson</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Notes / Source</th>
+                </tr>
+              </thead>
+              <tbody id="importPreviewTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- FOOTER ACTIONS -->
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:18px; border-top:1px solid #e2e8f0; padding-top:14px;">
+          <button type="button" class="btn-ui btn-ui-secondary" onclick="closeModal('importModal')">Cancel</button>
+          <button type="button" class="btn-ui btn-ui-primary" id="btnSubmitImport" onclick="submitImportLeads()" disabled style="background:#10b981; border-color:#10b981; color:#fff; display:inline-flex; align-items:center; gap:6px; padding:7px 18px; font-weight:600; cursor:pointer;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btnSubmitImportText">Import Deals into CRM</span>
           </button>
         </div>
       </div>
@@ -4147,6 +4417,370 @@
         showToast('Error: ' + err.message);
       } finally {
         btn.disabled = false;
+      }
+    }
+
+    // ==================== MANUAL CLIENT / DEAL ENTRY ====================
+    function openManualDealModal() {
+      document.getElementById('manDealClientName').value = '';
+      document.getElementById('manDealCompany').value = '';
+      document.getElementById('manDealPhone').value = '';
+      document.getElementById('manDealEmail').value = '';
+      document.getElementById('manDealService').value = 'Background Verification (BGV)';
+      document.getElementById('manDealValue').value = '';
+      document.getElementById('manDealStatus').value = 'New Lead';
+      document.getElementById('manDealCategory').value = 'Client / Employer Lead';
+      document.getElementById('manDealChannel').value = 'Manual';
+      document.getElementById('manDealNotes').value = '';
+
+      const sel = document.getElementById('manDealSalesperson');
+      const activeSales = isSalesRole(currentUser)
+        ? currentUser.name
+        : (document.getElementById('teamSalesExecutiveSelect')?.value !== 'All' ? document.getElementById('teamSalesExecutiveSelect')?.value : 'Jinendra');
+      if (activeSales && sel) sel.value = activeSales;
+
+      document.getElementById('manualDealModal').style.display = 'flex';
+      setTimeout(() => {
+        const el = document.getElementById('manDealClientName');
+        if (el) el.focus();
+      }, 100);
+    }
+
+    async function submitManualDeal() {
+      const clientName = document.getElementById('manDealClientName').value.trim();
+      const company = document.getElementById('manDealCompany').value.trim();
+      const phone = document.getElementById('manDealPhone').value.trim();
+      if (!clientName) {
+        showToast('Please enter client or contact person name');
+        document.getElementById('manDealClientName').focus();
+        return;
+      }
+      if (!phone) {
+        showToast('Please enter phone number');
+        document.getElementById('manDealPhone').focus();
+        return;
+      }
+
+      const email = document.getElementById('manDealEmail').value.trim();
+      const service = document.getElementById('manDealService').value;
+      const dealValue = document.getElementById('manDealValue').value.trim();
+      const salesperson = document.getElementById('manDealSalesperson').value || 'Jinendra';
+      const status = document.getElementById('manDealStatus').value;
+      const category = document.getElementById('manDealCategory').value;
+      const channel = document.getElementById('manDealChannel').value;
+      const notes = document.getElementById('manDealNotes').value.trim();
+
+      const btn = document.getElementById('btnSubmitManualDeal');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Deal...';
+
+      try {
+        const payload = {
+          candidate_name: clientName,
+          client_name: clientName,
+          company_name: company,
+          current_ctc: company,
+          deal_value: dealValue,
+          expected_ctc: dealValue,
+          service_requirement: service,
+          notice_period: service,
+          candidate_phone: phone,
+          client_phone: phone,
+          candidate_email: email,
+          client_email: email,
+          sales_person: salesperson,
+          salesperson_name: salesperson,
+          recruiter_name: salesperson,
+          category: category,
+          skills: service,
+          status: status,
+          channel: channel,
+          source: channel,
+          notes: notes,
+          recruiterNotes: notes,
+          salespersonNotes: notes,
+          text: notes
+        };
+
+        const res = await fetch('/api/sales/webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === 'success' || data.status === 'ok') {
+          showToast('✓ Client deal saved successfully!');
+          closeModal('manualDealModal');
+          refreshAllData();
+        } else {
+          showToast('Failed to save deal: ' + (data.message || 'Unknown error'));
+        }
+      } catch (err) {
+        showToast('Network error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Save Deal Entry';
+      }
+    }
+
+    // ==================== EXCEL / CSV BATCH IMPORT ====================
+    let parsedImportRows = [];
+    let detectedHeaders = [];
+
+    function openImportModal() {
+      resetImportFile();
+      const salesSelect = document.getElementById('importDefaultSalesperson');
+      if (salesSelect) {
+        const activeSales = localStorage.getItem('activeSalesperson') || 'Jinendra';
+        salesSelect.value = activeSales;
+      }
+      document.getElementById('importModal').style.display = 'flex';
+    }
+
+    function resetImportFile() {
+      parsedImportRows = [];
+      detectedHeaders = [];
+      const fileInput = document.getElementById('importFileInput');
+      if (fileInput) fileInput.value = '';
+      document.getElementById('importDropzone').style.display = 'block';
+      document.getElementById('importFileInfo').style.display = 'none';
+      document.getElementById('importConfigSection').style.display = 'none';
+      document.getElementById('importMappingSection').style.display = 'none';
+      document.getElementById('importPreviewSection').style.display = 'none';
+      const btn = document.getElementById('btnSubmitImport');
+      if (btn) btn.disabled = true;
+    }
+
+    function handleImportDrop(e) {
+      e.preventDefault();
+      const dropzone = document.getElementById('importDropzone');
+      dropzone.style.borderColor = '#cbd5e1';
+      dropzone.style.background = '#f8fafc';
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleImportFile(e.dataTransfer.files[0]);
+      }
+    }
+
+    function toggleImportMapping() {
+      const body = document.getElementById('importMappingBody');
+      const icon = document.getElementById('importMappingToggleIcon');
+      if (body.style.display === 'none') {
+        body.style.display = 'grid';
+        icon.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+      } else {
+        body.style.display = 'none';
+        icon.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+      }
+    }
+
+    async function handleImportFile(file) {
+      if (!file) return;
+      const validExts = ['.xlsx', '.xls', '.csv'];
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if (!validExts.includes(ext)) {
+        showToast('Please select a valid Excel (.xlsx, .xls) or CSV (.csv) file');
+        return;
+      }
+
+      try {
+        const data = await file.arrayBuffer();
+        if (typeof XLSX === 'undefined') {
+          throw new Error('Excel parser library (SheetJS) is loading. Please try again in 2 seconds.');
+        }
+
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        parsedImportRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (!parsedImportRows.length) {
+          showToast('Selected file has no data rows');
+          return;
+        }
+
+        detectedHeaders = Object.keys(parsedImportRows[0]);
+
+        // Update UI
+        document.getElementById('importDropzone').style.display = 'none';
+        const infoEl = document.getElementById('importFileInfo');
+        infoEl.style.display = 'flex';
+        document.getElementById('importFileName').textContent = file.name;
+        document.getElementById('importRowCount').textContent = parsedImportRows.length + ' rows';
+
+        document.getElementById('importConfigSection').style.display = 'block';
+        document.getElementById('importMappingSection').style.display = 'block';
+        document.getElementById('importPreviewSection').style.display = 'block';
+
+        populateMappingDropdowns(detectedHeaders);
+        autoDetectAndSelectColumns(detectedHeaders);
+        renderImportPreview();
+
+        const btn = document.getElementById('btnSubmitImport');
+        btn.disabled = false;
+        document.getElementById('btnSubmitImportText').textContent = `Import ${parsedImportRows.length} Deals into CRM`;
+      } catch (err) {
+        showToast('Failed to parse file: ' + err.message);
+      }
+    }
+
+    function populateMappingDropdowns(headers) {
+      const selects = [
+        'mapColName', 'mapColCompany', 'mapColPhone', 'mapColEmail',
+        'mapColService', 'mapColDealValue', 'mapColSalesperson', 'mapColNotes'
+      ];
+      selects.forEach(selId => {
+        const el = document.getElementById(selId);
+        if (!el) return;
+        el.innerHTML = '<option value="">-- None / Skip --</option>';
+        headers.forEach(h => {
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.textContent = h;
+          el.appendChild(opt);
+        });
+      });
+    }
+
+    function autoDetectAndSelectColumns(headers) {
+      function findBest(patterns) {
+        for (const p of patterns) {
+          const found = headers.find(h => {
+            const clean = h.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const target = p.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return clean === target || clean.includes(target);
+          });
+          if (found) return found;
+        }
+        return '';
+      }
+
+      const firstNameCol = findBest(['firstname', 'first']);
+      const lastNameCol = findBest(['lastname', 'last']);
+      const nameCol = findBest(['clientname', 'candidatename', 'fullname', 'name', 'contactperson', 'contactname']);
+      
+      const setSelect = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val) el.value = val;
+      };
+
+      if (firstNameCol) {
+        setSelect('mapColName', firstNameCol);
+      } else if (nameCol) {
+        setSelect('mapColName', nameCol);
+      }
+
+      setSelect('mapColCompany', findBest(['company', 'organization', 'employer', 'org', 'firm']));
+      setSelect('mapColPhone', findBest(['phone', 'mobile', 'contactno', 'contactnumber', 'contact', 'cell', 'tel']));
+      setSelect('mapColEmail', findBest(['email', 'mail', 'emailaddress', 'e-mail']));
+      setSelect('mapColService', findBest(['service', 'requirement', 'role', 'position', 'designation', 'jobtitle', 'skills']));
+      setSelect('mapColDealValue', findBest(['dealvalue', 'budget', 'commercials', 'amount', 'ctc', 'value']));
+      setSelect('mapColSalesperson', findBest(['leadowner', 'salesperson', 'owner', 'recruiter', 'assignedto', 'agent']));
+      setSelect('mapColNotes', findBest(['leadsource', 'source', 'notes', 'remarks', 'discussion', 'comment']));
+    }
+
+    function renderImportPreview() {
+      const tbody = document.getElementById('importPreviewTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const nameCol = document.getElementById('mapColName').value;
+      const compCol = document.getElementById('mapColCompany').value;
+      const phoneCol = document.getElementById('mapColPhone').value;
+      const emailCol = document.getElementById('mapColEmail').value;
+      const servCol = document.getElementById('mapColService').value;
+      const salesCol = document.getElementById('mapColSalesperson').value;
+      const notesCol = document.getElementById('mapColNotes').value;
+      const defaultSales = document.getElementById('importDefaultSalesperson').value;
+
+      const lastNameCol = detectedHeaders.find(h => /last\s*name/i.test(h));
+
+      const previewRows = parsedImportRows.slice(0, 5);
+      previewRows.forEach(row => {
+        let nameVal = nameCol ? String(row[nameCol] || '') : '';
+        if (lastNameCol && nameCol && /first/i.test(nameCol) && row[lastNameCol]) {
+          nameVal = `${nameVal} ${row[lastNameCol]}`.trim();
+        }
+        const compVal = compCol ? String(row[compCol] || '') : '';
+        const phoneVal = phoneCol ? String(row[phoneCol] || '') : '';
+        const emailVal = emailCol ? String(row[emailCol] || '') : '';
+        const servVal = servCol ? String(row[servCol] || '') : '';
+        const salesVal = (salesCol && row[salesCol]) ? String(row[salesCol]) : defaultSales;
+        const notesVal = notesCol ? String(row[notesCol] || '') : '';
+
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #f1f5f9';
+        tr.innerHTML = `
+          <td style="padding:6px 10px; font-weight:600; color:#0f172a;">${escapeHtml(nameVal || '—')}</td>
+          <td style="padding:6px 10px; color:#475569;">${escapeHtml(compVal || '—')}</td>
+          <td style="padding:6px 10px; color:#475569;">${escapeHtml(phoneVal || '—')}</td>
+          <td style="padding:6px 10px; color:#475569;">${escapeHtml(emailVal || '—')}</td>
+          <td style="padding:6px 10px; color:#475569;">${escapeHtml(servVal || '—')}</td>
+          <td style="padding:6px 10px; color:#d97706; font-weight:600;">${escapeHtml(salesVal || '—')}</td>
+          <td style="padding:6px 10px; color:#64748b; font-size:11px;">${escapeHtml(notesVal || '—')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function submitImportLeads() {
+      if (!parsedImportRows.length) {
+        showToast('No records to import');
+        return;
+      }
+
+      const nameCol = document.getElementById('mapColName').value;
+      const compCol = document.getElementById('mapColCompany').value;
+      const phoneCol = document.getElementById('mapColPhone').value;
+      const emailCol = document.getElementById('mapColEmail').value;
+      const servCol = document.getElementById('mapColService').value;
+      const valCol = document.getElementById('mapColDealValue').value;
+      const salesCol = document.getElementById('mapColSalesperson').value;
+      const notesCol = document.getElementById('mapColNotes').value;
+      const defaultSales = document.getElementById('importDefaultSalesperson').value;
+      const defaultStatus = document.getElementById('importDefaultStatus').value;
+      const lastNameCol = detectedHeaders.find(h => /last\s*name/i.test(h));
+
+      const items = parsedImportRows.map(row => {
+        let nameVal = nameCol ? String(row[nameCol] || '') : '';
+        if (lastNameCol && nameCol && /first/i.test(nameCol) && row[lastNameCol]) {
+          nameVal = `${nameVal} ${row[lastNameCol]}`.trim();
+        }
+        return {
+          clientName: nameVal,
+          company: compCol ? String(row[compCol] || '') : '',
+          phone: phoneCol ? String(row[phoneCol] || '') : '',
+          email: emailCol ? String(row[emailCol] || '') : '',
+          service: servCol ? String(row[servCol] || '') : '',
+          dealValue: valCol ? String(row[valCol] || '') : '',
+          salesperson: (salesCol && row[salesCol]) ? String(row[salesCol]) : defaultSales,
+          status: defaultStatus,
+          notes: notesCol ? String(row[notesCol] || '') : ''
+        };
+      });
+
+      const btn = document.getElementById('btnSubmitImport');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importing...';
+
+      try {
+        const res = await fetch('/api/sales/leads/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items, defaultSalesperson: defaultSales })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          showToast(`✓ Imported successfully! ${data.created} new deals created, ${data.updated} updated.`);
+          closeModal('importModal');
+          refreshAllData();
+        } else {
+          showToast('Import failed: ' + (data.message || 'Unknown error'));
+        }
+      } catch (err) {
+        showToast('Error during import: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="btnSubmitImportText">Import Deals into CRM</span>';
       }
     }
 

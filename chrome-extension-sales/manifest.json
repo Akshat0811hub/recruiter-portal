@@ -14,7 +14,12 @@
     "https://web.whatsapp.com/*",
     "https://mail.google.com/*",
     "http://*/*",
-    "https://*/*"
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*",
+    "http://192.168.*/*"
   ],
   "background": {
     "service_worker": "background.js"

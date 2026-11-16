@@ -41,10 +41,11 @@ const NON_NAME_WORDS = new Set([
   'ui', 'ux', 'qa', 'support', 'admin', 'orbitouch', 'outsourcing',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'today', 'yesterday',
   'suhani', 'sisodiya', 'pooja', 'jyoti', 'akshay', 'munisha', 'sakshi', 'akshita', 'divanshi',
-  'gunjan', 'kamakshi', 'manshi', 'shriparna', 'neetu', 'kajal'
+  'gunjan', 'kamakshi', 'manshi', 'shriparna', 'neetu', 'kajal', 'jinendra'
 ]);
 
 const RECRUITER_MAP = {
+  "jinendra": "Jinendra",
   "pooja": "Pooja Singh",
   "pooja singh": "Pooja Singh",
   "jyoti": "Jyoti Shah",
@@ -74,6 +75,7 @@ const RECRUITER_MAP = {
 };
 
 const EMAIL_TO_RECRUITER_MAP = {
+  "jinendra@orbitouch-hr.com": "Jinendra",
   "pooja@orbitouch-hr.com": "Pooja Singh",
   "jyoti.shah@orbitouch-hr.com": "Jyoti Shah",
   "suhani@orbitouch-hr.com": "Suhani Sisodiya",
@@ -95,7 +97,7 @@ function normalizeRecruiterName(name, email = "") {
   if (cleanEmail && EMAIL_TO_RECRUITER_MAP[cleanEmail]) {
     return EMAIL_TO_RECRUITER_MAP[cleanEmail];
   }
-  if (!name) return "Suhani Sisodiya";
+  if (!name) return "";
   const clean = String(name).replace(/\s*\(Alt\)$/i, "").trim();
   return RECRUITER_MAP[clean.toLowerCase()] || clean;
 }
@@ -154,7 +156,7 @@ function extractCandidateName(text) {
 }
 
 let cachedConfig = {
-  recruiterName: "Suhani Sisodiya",
+  recruiterName: "Jinendra",
   webhookUrl: "http://192.168.1.34:3000/api/webhook",
   autoSync: true,
   stealthMode: false

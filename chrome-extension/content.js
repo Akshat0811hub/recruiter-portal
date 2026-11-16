@@ -62,7 +62,7 @@ function extractCandidateNameAI(text) {
 }
 
 let cachedConfig = {
-  recruiterName: "Suhani",
+  recruiterName: "Jinendra",
   webhookUrl: "http://DESKTOP-GLVB82A:3000/api/webhook",
   autoSync: true,
   stealthMode: false
@@ -265,7 +265,7 @@ function dispatchLead(candidateName, candidatePhone, fullTranscriptText, isIniti
 
   const payload = {
     source: "WhatsApp (Auto)",
-    recruiter_name: cachedConfig.recruiterName || "Suhani",
+    recruiter_name: cachedConfig.recruiterName || "",
     candidate_name: finalName,
     candidate_phone: candidatePhone || "",
     candidate_email: candidateEmail,
@@ -281,7 +281,7 @@ function dispatchLead(candidateName, candidatePhone, fullTranscriptText, isIniti
       console.log(`[Auto-CRM] 🚀 Synced (${isInitial ? 'New Lead' : 'Live Chat Update'}):`, candidateName, candidatePhone);
       const title = candidatePhone || candidateName;
       if (isInitial) {
-        showToast(`⚡ New Lead Saved: ${title} -> Suhani's CRM!`, "success");
+        showToast(`⚡ New Lead Saved: ${title} -> CRM!`, "success");
       } else {
         showToast(`🔄 Chat Updated: ${title} -> CRM Transcript Live!`, "info");
       }

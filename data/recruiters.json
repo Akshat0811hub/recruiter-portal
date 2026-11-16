@@ -1,89 +1,113 @@
 [
   {
     "id": "REC-01",
-    "name": "Suhani",
-    "phone": "",
-    "email": "",
+    "name": "Jinendra",
+    "phone": "8010264508",
+    "email": "jinendra@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-02",
-    "name": "Rahul",
-    "phone": "",
-    "email": "",
+    "name": "Suhani Sisodiya",
+    "phone": "7428890976",
+    "email": "suhani@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-03",
-    "name": "Pooja",
+    "name": "Divanshi Gupta",
     "phone": "",
-    "email": "",
+    "email": "divanshi@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-04",
-    "name": "Amit",
+    "name": "Sakshi Kaur",
     "phone": "",
-    "email": "",
+    "email": "sakshi@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-05",
-    "name": "Neha",
+    "name": "Kamakshi Kaushik",
     "phone": "",
-    "email": "",
+    "email": "kamakshi@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-06",
-    "name": "Vikram",
+    "name": "Manshi Agnihotri",
     "phone": "",
-    "email": "",
+    "email": "manshi@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-07",
-    "name": "Anjali",
+    "name": "Jyoti Shah",
     "phone": "",
-    "email": "",
+    "email": "jyoti.shah@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-08",
-    "name": "Rohan",
+    "name": "Pooja Singh",
     "phone": "",
-    "email": "",
+    "email": "pooja@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-09",
-    "name": "Kavita",
+    "name": "Munisha Thakur",
     "phone": "",
-    "email": "",
+    "email": "munisha@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-10",
-    "name": "Deepak",
+    "name": "Neetu Sharma",
     "phone": "",
-    "email": "",
+    "email": "neetu.sharma@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   },
   {
     "id": "REC-11",
-    "name": "Suhani Sisodiya",
+    "name": "Akshay Pandey",
     "phone": "",
-    "email": "",
+    "email": "akshay@orbitouch-hr.com",
+    "status": "Active",
+    "leadsCount": 0
+  },
+  {
+    "id": "REC-12",
+    "name": "Akshita Nayal",
+    "phone": "",
+    "email": "akshita@orbitouch-hr.com",
+    "status": "Active",
+    "leadsCount": 0
+  },
+  {
+    "id": "REC-13",
+    "name": "Gunjan Sharma",
+    "phone": "",
+    "email": "gunjan@orbitouch-hr.com",
+    "status": "Active",
+    "leadsCount": 0
+  },
+  {
+    "id": "REC-14",
+    "name": "Shriparna Acharya",
+    "phone": "",
+    "email": "shriparna@orbitouch-hr.com",
     "status": "Active",
     "leadsCount": 0
   }

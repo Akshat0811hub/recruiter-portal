@@ -8,7 +8,7 @@
 //  4. Persistent Offline Retry Queue (Zero lost messages even during Wi-Fi blips).
 // ==========================================================================================
 
-const FROZEN_SERVER_IP = "192.168.1.34";
+const FROZEN_SERVER_IP = "192.168.1.8";
 const DEFAULT_SERVER_HOST = "DESKTOP-GLVB82A";
 const PORT = 3000;
 const DISCOVERY_CHANNEL = "https://ntfy.sh/sales_crm_lan_discovery_channel/json?poll=1";
@@ -29,7 +29,7 @@ async function fetchBroadcastedIp() {
           if (outer && outer.message) {
             const inner = JSON.parse(outer.message);
             if (inner && inner.ip && !inner.ip.startsWith("169.254.")) {
-              return `http://${inner.ip}:${inner.port || PORT}/api/webhook`;
+              return `http://${inner.ip}:${inner.port || PORT}/api/sales/webhook`;
             }
           }
         } catch (e) {}
@@ -48,8 +48,11 @@ async function burstScanLanSubnet() {
         .then(r => r.json())
         .then(data => {
           clearTimeout(timer);
-          if (data && (data.app === "Sales-CRM" || data.salesApp === "Sales-CRM")) resolve(`${baseUrl}/api/sales/webhook`);
-          else reject();
+          if (data && (data.app === "Sales-CRM" || data.salesApp === "Sales-CRM" || (data.portals && data.portals.includes("sales")))) {
+            resolve(`${baseUrl}/api/sales/webhook`);
+          } else {
+            reject();
+          }
         })
         .catch(() => {
           clearTimeout(timer);
@@ -78,26 +81,39 @@ async function getCandidateUrls(preferredUrl) {
   const targets = new Set();
 
   if (preferredUrl && preferredUrl.trim()) {
-    targets.add(preferredUrl.trim());
+    const p = preferredUrl.trim();
+    if (!p.includes("192.168.1.34")) {
+      targets.add(p);
+    }
   }
 
   try {
     const stored = await chrome.storage.local.get(["workingServerUrl", "webhookUrl"]);
-    if (stored.workingServerUrl) targets.add(stored.workingServerUrl);
-    if (stored.webhookUrl) targets.add(stored.webhookUrl);
+    if (stored.workingServerUrl && !stored.workingServerUrl.includes("192.168.1.34")) targets.add(stored.workingServerUrl);
+    if (stored.webhookUrl && !stored.webhookUrl.includes("192.168.1.34")) targets.add(stored.webhookUrl);
   } catch (e) {}
 
+  // Prioritize local machine URLs first for sub-10ms instantaneous discovery
+  targets.add(`http://localhost:${PORT}/api/sales/webhook`);
+  targets.add(`http://127.0.0.1:${PORT}/api/sales/webhook`);
+  targets.add(`http://${FROZEN_SERVER_IP}:${PORT}/api/sales/webhook`);
+  targets.add(`http://${DEFAULT_SERVER_HOST}:${PORT}/api/sales/webhook`);
+  targets.add(`http://${DEFAULT_SERVER_HOST}.local:${PORT}/api/sales/webhook`);
   targets.add(`http://localhost:${PORT}/api/webhook`);
   targets.add(`http://127.0.0.1:${PORT}/api/webhook`);
-  targets.add(`http://${FROZEN_SERVER_IP}:${PORT}/api/webhook`);
-  targets.add(`http://${DEFAULT_SERVER_HOST}:${PORT}/api/webhook`);
-  targets.add(`http://${DEFAULT_SERVER_HOST}.local:${PORT}/api/webhook`);
 
   return Array.from(targets).filter(Boolean);
 }
 
 function toBaseUrl(webhookUrl) {
-  return String(webhookUrl || "").replace(/\/api\/webhook\/?$/, "");
+  try {
+    const u = new URL(webhookUrl);
+    return `${u.protocol}//${u.host}`;
+  } catch (e) {
+    return String(webhookUrl || "")
+      .replace(/\/api\/(sales\/)?webhook\/?$/, "")
+      .replace(/\/+$/, "");
+  }
 }
 
 async function autoCatchServerUrl(preferredUrl) {
@@ -107,15 +123,17 @@ async function autoCatchServerUrl(preferredUrl) {
     new Promise((resolve, reject) => {
       const t0 = Date.now();
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 1400);
+      const timer = setTimeout(() => controller.abort(), 1200);
       const pingUrl = `${toBaseUrl(url)}/api/ping`;
 
       fetch(pingUrl, { signal: controller.signal })
         .then(r => r.json())
         .then(data => {
           clearTimeout(timer);
-          if (data && (data.app === "Sales-CRM" || data.salesApp === "Sales-CRM")) {
-            resolve({ url, info: data, latencyMs: Math.max(1, Date.now() - t0) });
+          if (data && (data.app === "Sales-CRM" || data.salesApp === "Sales-CRM" || (data.portals && data.portals.includes("sales")))) {
+            const base = toBaseUrl(url);
+            const salesWebhook = data.salesWebhookUrl || `${base}/api/sales/webhook`;
+            resolve({ url: salesWebhook, info: data, latencyMs: Math.max(1, Date.now() - t0) });
           } else {
             reject();
           }
@@ -131,6 +149,7 @@ async function autoCatchServerUrl(preferredUrl) {
     if (winner && winner.url) {
       await chrome.storage.local.set({
         workingServerUrl: winner.url,
+        webhookUrl: winner.url,
         lastConnectedAt: Date.now(),
         lastLatencyMs: winner.latencyMs
       });
@@ -263,7 +282,11 @@ async function postLeadDirect(webhookUrl, payload, allowQueueOnFail = true) {
 
       fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Portal": "sales",
+          "X-User-Role": "sales"
+        },
         body: JSON.stringify(payload),
         signal: controller.signal
       })

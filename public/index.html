@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg-app: #f8fafc;
@@ -1602,15 +1603,15 @@
           <i class="fa-solid fa-arrow-right" style="color:#6366f1; font-size:11px;"></i>
         </button>
 
-        <button type="button" class="btn-quick-login" onclick="quickLogin('tl', 'tl@123')" style="margin-bottom:10px;">
+        <button type="button" class="btn-quick-login" onclick="quickLogin('jinendra', 'Jinendra@123')" style="margin-bottom:10px; background:linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.08)); border:1.5px solid #a5b4fc;">
           <div style="display:flex; align-items:center; gap:8px;">
-            <i class="fa-solid fa-user-gear" style="color:#0ea5e9; font-size:14px;"></i>
+            <i class="fa-solid fa-user-tie" style="color:#6366f1; font-size:14px;"></i>
             <div style="text-align:left;">
-              <strong style="color:#0f172a;">Team Leader (Vikram)</strong>
-              <div style="font-size:10px; color:#64748b;">Team Lead Panel</div>
+              <strong style="color:#1e1b4b;">Jinendra</strong>
+              <div style="font-size:10px; color:#4f46e5;">Recruiter &amp; Sales Workspace (8010264508)</div>
             </div>
           </div>
-          <i class="fa-solid fa-arrow-right" style="color:#94a3b8; font-size:11px;"></i>
+          <i class="fa-solid fa-arrow-right" style="color:#6366f1; font-size:11px;"></i>
         </button>
 
         <div style="font-size:10.5px; font-weight:600; color:#64748b; margin-bottom:6px;">Recruiter Workspaces:</div>
@@ -1619,16 +1620,16 @@
             <span><i class="fa-solid fa-user-check" style="color:#10b981; margin-right:5px;"></i><strong>Suhani</strong></span>
             <i class="fa-solid fa-arrow-right" style="font-size:10px; color:#94a3b8;"></i>
           </button>
-          <button type="button" class="btn-quick-login" onclick="quickLogin('rahul', 'rahul@123')">
-            <span><i class="fa-solid fa-user-check" style="color:#10b981; margin-right:5px;"></i><strong>Rahul</strong></span>
+          <button type="button" class="btn-quick-login" onclick="quickLogin('divanshi', 'divanshi@123')">
+            <span><i class="fa-solid fa-user-check" style="color:#10b981; margin-right:5px;"></i><strong>Divanshi</strong></span>
             <i class="fa-solid fa-arrow-right" style="font-size:10px; color:#94a3b8;"></i>
           </button>
-          <button type="button" class="btn-quick-login" onclick="quickLogin('pooja', 'pooja@123')">
-            <span><i class="fa-solid fa-user-check" style="color:#10b981; margin-right:5px;"></i><strong>Pooja</strong></span>
+          <button type="button" class="btn-quick-login" onclick="quickLogin('sakshi', 'sakshi@123')">
+            <span><i class="fa-solid fa-user-check" style="color:#10b981; margin-right:5px;"></i><strong>Sakshi</strong></span>
             <i class="fa-solid fa-arrow-right" style="font-size:10px; color:#94a3b8;"></i>
           </button>
-          <button type="button" class="btn-quick-login" onclick="quickLogin('amit', 'amit@123')">
-            <span><i class="fa-solid fa-user-check" style="color:#10b981; margin-right:5px;"></i><strong>Amit</strong></span>
+          <button type="button" class="btn-quick-login" onclick="quickLogin('kamakshi', 'kamakshi@123')">
+            <span><i class="fa-solid fa-user-check" style="color:#10b981; margin-right:5px;"></i><strong>Kamakshi</strong></span>
             <i class="fa-solid fa-arrow-right" style="font-size:10px; color:#94a3b8;"></i>
           </button>
         </div>
@@ -1795,6 +1796,18 @@
               <span class="live-pulse-dot"></span>
               <span id="liveClockText">--:--:--</span>
             </div>
+
+            <div class="topbar-v-divider"></div>
+
+            <!-- Import Excel / CSV Button -->
+            <button type="button" class="btn-ui btn-ui-secondary" onclick="openImportModal()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 13px; border-radius:7px; cursor:pointer; background:#fff; border:1px solid #10b981; color:#047857; box-shadow:0 1px 3px rgba(16,185,129,0.15);">
+              <i class="fa-solid fa-file-excel" style="color:#10b981; font-size:14px;"></i> Import Excel
+            </button>
+
+            <!-- Manual Lead / Candidate Entry Button -->
+            <button type="button" class="btn-ui btn-ui-primary" onclick="openManualLeadModal()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 14px; background:linear-gradient(135deg, #4f46e5, #4338ca); color:#fff; border:none; border-radius:7px; box-shadow:0 2px 6px rgba(79,70,229,0.3); cursor:pointer;">
+              <i class="fa-solid fa-plus"></i> Manual Entry
+            </button>
           </div>
         </header>
 
@@ -1894,6 +1907,14 @@
 
                 <button class="btn-ui btn-ui-secondary" onclick="exportLeadCSV()">
                   <i class="fa-solid fa-download"></i> Export CSV
+                </button>
+
+                <button type="button" class="btn-ui btn-ui-secondary" onclick="openImportModal()" style="border-color:#10b981; color:#047857; display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+                  <i class="fa-solid fa-file-excel" style="color:#10b981;"></i> Import Excel / CSV
+                </button>
+
+                <button type="button" class="btn-ui btn-ui-primary" onclick="openManualLeadModal()" style="background:linear-gradient(135deg, #4f46e5, #4338ca); color:#fff; border:none; display:inline-flex; align-items:center; gap:6px;">
+                  <i class="fa-solid fa-user-plus"></i> + Add Candidate / Client
                 </button>
               </div>
             </div>
@@ -2289,6 +2310,268 @@
     </div>
   </div>
 
+  <!-- ==================== MANUAL CANDIDATE / CLIENT ENTRY MODAL ==================== -->
+  <div class="modal-overlay" id="manualLeadModal" onclick="if(event.target===this) closeModal('manualLeadModal')">
+    <div class="modal-box" style="max-width:540px;">
+      <div class="modal-head">
+        <div>
+          <div style="font-size:16px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Manual Lead / Candidate Entry
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Add candidate or client requirement details directly</div>
+        </div>
+        <button class="btn-close-x" onclick="closeModal('manualLeadModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-content" style="max-height:75vh; overflow-y:auto;">
+        <div class="form-grid-2">
+          <div class="field-block">
+            <label>Candidate / Client Name *</label>
+            <input type="text" id="manLeadName" placeholder="e.g. Rahul Sharma" required>
+          </div>
+          <div class="field-block">
+            <label>Phone Number *</label>
+            <input type="text" id="manLeadPhone" placeholder="e.g. 9876543210" required>
+          </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:10px;">
+          <div class="field-block">
+            <label>Email Address</label>
+            <input type="email" id="manLeadEmail" placeholder="e.g. rahul@example.com">
+          </div>
+          <div class="field-block">
+            <label>Lead Category</label>
+            <select id="manLeadCategory">
+              <option value="Experienced / Job Change">Experienced / Job Change</option>
+              <option value="New Job Seeker">New Job Seeker</option>
+              <option value="Client / Employer Lead">Client / Employer Lead</option>
+              <option value="General Enquiry">General Enquiry</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:10px;">
+          <div class="field-block">
+            <label>Role / Requirement ("Isko kya chahiye") *</label>
+            <input type="text" id="manLeadSkills" placeholder="e.g. React Developer, 5 Telecallers, UI/UX" required>
+          </div>
+          <div class="field-block">
+            <label>Assigned Recruiter (Owner)</label>
+            <select id="manLeadRecruiter">
+              <option value="Jinendra">Jinendra</option>
+              <option value="Suhani Sisodiya">Suhani Sisodiya</option>
+              <option value="Divanshi Gupta">Divanshi Gupta</option>
+              <option value="Sakshi Kaur">Sakshi Kaur</option>
+              <option value="Kamakshi Kaushik">Kamakshi Kaushik</option>
+              <option value="Manshi Agnihotri">Manshi Agnihotri</option>
+              <option value="Jyoti Shah">Jyoti Shah</option>
+              <option value="Pooja Singh">Pooja Singh</option>
+              <option value="Munisha Thakur">Munisha Thakur</option>
+              <option value="Neetu Sharma">Neetu Sharma</option>
+              <option value="Akshay Pandey">Akshay Pandey</option>
+              <option value="Akshita Nayal">Akshita Nayal</option>
+              <option value="Gunjan Sharma">Gunjan Sharma</option>
+              <option value="Shriparna Acharya">Shriparna Acharya</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px;">
+          <div class="field-block">
+            <label>Current CTC</label>
+            <input type="text" id="manLeadCurCtc" placeholder="e.g. 6 LPA">
+          </div>
+          <div class="field-block">
+            <label>Expected CTC</label>
+            <input type="text" id="manLeadExpCtc" placeholder="e.g. 10 LPA">
+          </div>
+          <div class="field-block">
+            <label>Notice Period</label>
+            <input type="text" id="manLeadNotice" placeholder="e.g. 15 Days">
+          </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:10px;">
+          <div class="field-block">
+            <label>Pipeline Stage</label>
+            <select id="manLeadStatus">
+              <option value="New Lead">New Lead</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Shortlisted">Shortlisted</option>
+              <option value="Interview Scheduled">Interview Scheduled</option>
+              <option value="Selected">Selected</option>
+              <option value="Follow-up">Follow-up</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="field-block">
+            <label>Source / Channel</label>
+            <select id="manLeadChannel">
+              <option value="Manual">Manual Entry</option>
+              <option value="Direct Call">Direct Call</option>
+              <option value="Referral">Referral</option>
+              <option value="Naukri">Naukri Portal</option>
+              <option value="LinkedIn">LinkedIn</option>
+              <option value="WhatsApp">WhatsApp</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-block" style="margin-top:10px;">
+          <label>Discussion / Notes ("Baat Kya Hui / Candidate Details") *</label>
+          <textarea id="manLeadNotes" rows="3" placeholder="Enter conversation details: Ye client/candidate tha, isko ye role chahiye, itne saal ka experience hai, xyz demands etc." style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:13px; font-family:inherit; resize:vertical;"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+          <button type="button" class="btn-ui btn-ui-secondary" onclick="closeModal('manualLeadModal')">Cancel</button>
+          <button type="button" class="btn-ui btn-ui-primary" id="btnSubmitManualLead" onclick="submitManualLead()">
+            <i class="fa-solid fa-check"></i> Save Entry
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EXCEL / CSV LEADS IMPORT MODAL ==================== -->
+  <div class="modal-overlay" id="importModal" onclick="if(event.target===this) closeModal('importModal')">
+    <div class="modal-box" style="max-width:760px; width:95%;">
+      <div class="modal-head">
+        <div>
+          <div style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-file-excel" style="color:#10b981;"></i>
+            <span>Import Candidates / Leads from Excel or CSV</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Upload your spreadsheet (.xlsx, .xls, .csv). Fields will be auto-detected and mapped automatically.</div>
+        </div>
+        <button class="btn-close-x" onclick="closeModal('importModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-content" style="max-height:78vh; overflow-y:auto; padding:18px;">
+        <!-- DROPZONE -->
+        <div id="importDropzone" style="border:2px dashed #cbd5e1; border-radius:10px; padding:24px; text-align:center; background:#f8fafc; cursor:pointer; transition:all 0.2s;" onclick="document.getElementById('importFileInput').click()" ondragover="event.preventDefault(); this.style.borderColor='#10b981'; this.style.background='#ecfdf5';" ondragleave="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';" ondrop="handleImportDrop(event)">
+          <input type="file" id="importFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="if(this.files &amp;&amp; this.files[0]) handleImportFile(this.files[0])">
+          <i class="fa-solid fa-cloud-arrow-up" style="font-size:36px; color:#10b981; margin-bottom:10px;"></i>
+          <div style="font-size:14px; font-weight:600; color:#1e293b;">Click to browse or Drag &amp; Drop your Excel / CSV file here</div>
+          <div style="font-size:12px; color:#64748b; margin-top:4px;">Supports .xlsx, .xls, .csv files (Handles split First &amp; Last Names, Phone, Company, Email etc.)</div>
+        </div>
+
+        <!-- FILE INFO BANNER -->
+        <div id="importFileInfo" style="display:none; margin-top:14px; padding:10px 14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fa-solid fa-file-circle-check" style="color:#10b981; font-size:18px;"></i>
+            <div>
+              <span id="importFileName" style="font-weight:600; color:#166534; font-size:13px;">file.xlsx</span>
+              <span id="importRowCount" style="margin-left:8px; font-size:11.5px; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; font-weight:600;">0 rows</span>
+            </div>
+          </div>
+          <button type="button" class="btn-ui btn-ui-secondary" style="font-size:11.5px; padding:3px 10px;" onclick="resetImportFile()"><i class="fa-solid fa-rotate-right"></i> Choose Other File</button>
+        </div>
+
+        <!-- DEFAULT OWNER & STATUS CONFIG -->
+        <div id="importConfigSection" style="display:none; margin-top:14px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px;">
+          <div style="font-size:13px; font-weight:700; color:#0f172a; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-sliders" style="color:#4f46e5;"></i> Default Assignment Settings
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label style="font-size:11.5px; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Default Recruiter (If not assigned in sheet)</label>
+              <select id="importDefaultRecruiter" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:6px 9px; font-size:12.5px; font-family:inherit;"></select>
+            </div>
+            <div>
+              <label style="font-size:11.5px; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Default Pipeline Stage</label>
+              <select id="importDefaultStatus" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:6px 9px; font-size:12.5px; font-family:inherit;">
+                <option value="NEW_LEAD">New Lead (Initial Pipeline)</option>
+                <option value="CONTACTED">Contacted / In Discussion</option>
+                <option value="INTERESTED">Interested / Qualified</option>
+                <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+                <option value="OFFERED">Offer Extended</option>
+                <option value="PLACED">Placed / Closed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMN MAPPING ACCORDION -->
+        <div id="importMappingSection" style="display:none; margin-top:14px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleImportMapping()">
+            <div style="font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-table-columns" style="color:#0284c7;"></i> Detected Column Mapping
+              <span style="font-size:11px; background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:10px; font-weight:600;">Auto-Mapped</span>
+            </div>
+            <span id="importMappingToggleIcon" style="font-size:12px; color:#64748b;"><i class="fa-solid fa-chevron-down"></i></span>
+          </div>
+
+          <div id="importMappingBody" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Candidate Name</label>
+              <select id="mapColName" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Phone Number *</label>
+              <select id="mapColPhone" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Email Address</label>
+              <select id="mapColEmail" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Company / Client</label>
+              <select id="mapColCompany" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Role / Skills</label>
+              <select id="mapColRole" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Compensation / Current CTC</label>
+              <select id="mapColCtc" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Lead Owner / Recruiter</label>
+              <select id="mapColRecruiter" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:600; color:#64748b; display:block; margin-bottom:3px;">Notes / Source / Discussion</label>
+              <select id="mapColNotes" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; font-size:12px;" onchange="renderImportPreview()"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVE PREVIEW TABLE -->
+        <div id="importPreviewSection" style="display:none; margin-top:14px;">
+          <div style="font-size:12.5px; font-weight:700; color:#334155; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+            <span><i class="fa-solid fa-eye" style="color:#6366f1;"></i> Live Preview (First 5 Rows to be imported)</span>
+            <span style="font-size:11px; color:#64748b;">Review before submitting</span>
+          </div>
+          <div style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px; max-height:220px;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+              <thead style="background:#f1f5f9; position:sticky; top:0;">
+                <tr>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Candidate</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Phone</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Email</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Company</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Role</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Recruiter</th>
+                  <th style="padding:6px 10px; border-bottom:1px solid #cbd5e1;">Notes / Source</th>
+                </tr>
+              </thead>
+              <tbody id="importPreviewTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- FOOTER ACTIONS -->
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:18px; border-top:1px solid #e2e8f0; padding-top:14px;">
+          <button type="button" class="btn-ui btn-ui-secondary" onclick="closeModal('importModal')">Cancel</button>
+          <button type="button" class="btn-ui btn-ui-primary" id="btnSubmitImport" onclick="submitImportLeads()" disabled style="background:#10b981; border-color:#10b981; color:#fff; display:inline-flex; align-items:center; gap:6px; padding:7px 18px; font-weight:600; cursor:pointer;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btnSubmitImportText">Import Leads into CRM</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== CLEAN MOBILE SYNC PAIRING MODAL ==================== -->
   <div class="modal-overlay" id="phoneSyncModal" onclick="if(event.target===this) closeModal('phoneSyncModal')">
     <div class="modal-box" style="max-width:520px;">
@@ -2524,7 +2807,7 @@
           : '<span class="live-timer-chip timer-ringing"><i class="fa-solid fa-bell"></i> Ringing · ' + elapsedSec + 's</span>';
 
         const iconClass = isTalking ? 'fa-phone-volume' : 'fa-bell';
-        const recArg = escapeHtml(JSON.stringify(c.recruiterName || 'Suhani'));
+        const recArg = escapeHtml(JSON.stringify(c.recruiterName || ''));
         const phoneArg = escapeHtml(JSON.stringify(c.phone || ''));
         const nameArg = escapeHtml(JSON.stringify(c.candidateName || ''));
 
@@ -3641,7 +3924,9 @@
     // ==================== MANUAL CALL LOGGING ====================
     function openCallLogModal() {
       if (!currentUser) return;
-      document.getElementById('logCallRecruiter').value = currentUser.role === 'recruiter' ? currentUser.name : 'Suhani';
+      const teamFilterSel = document.getElementById('teamRecruiterSelect');
+      const activeFilterRec = teamFilterSel && teamFilterSel.value !== 'All' ? teamFilterSel.value : '';
+      document.getElementById('logCallRecruiter').value = currentUser.role === 'recruiter' ? currentUser.name : (activeFilterRec || 'Jinendra');
       document.getElementById('logCallPhone').value = '';
       document.getElementById('logCallName').value = '';
       document.getElementById('logCallDuration').value = '';
@@ -3692,6 +3977,386 @@
         showToast('Error: ' + err.message);
       } finally {
         btn.disabled = false;
+      }
+    }
+
+    // ==================== MANUAL CANDIDATE / CLIENT ENTRY ====================
+    function openManualLeadModal() {
+      document.getElementById('manLeadName').value = '';
+      document.getElementById('manLeadPhone').value = '';
+      document.getElementById('manLeadEmail').value = '';
+      document.getElementById('manLeadCategory').value = 'Experienced / Job Change';
+      document.getElementById('manLeadSkills').value = '';
+      document.getElementById('manLeadCurCtc').value = '';
+      document.getElementById('manLeadExpCtc').value = '';
+      document.getElementById('manLeadNotice').value = '';
+      document.getElementById('manLeadStatus').value = 'New Lead';
+      document.getElementById('manLeadChannel').value = 'Manual';
+      document.getElementById('manLeadNotes').value = '';
+
+      const recSelect = document.getElementById('manLeadRecruiter');
+      if (teamScorecard && teamScorecard.length > 0) {
+        recSelect.innerHTML = '';
+        teamScorecard.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.name;
+          opt.textContent = r.name;
+          recSelect.appendChild(opt);
+        });
+      }
+      const activeRec = (currentUser && currentUser.role === 'recruiter')
+        ? currentUser.name
+        : (document.getElementById('teamRecruiterSelect')?.value !== 'All' ? document.getElementById('teamRecruiterSelect')?.value : 'Jinendra');
+      if (activeRec && recSelect) recSelect.value = activeRec;
+
+      document.getElementById('manualLeadModal').style.display = 'flex';
+      setTimeout(() => {
+        const el = document.getElementById('manLeadName');
+        if (el) el.focus();
+      }, 100);
+    }
+
+    async function submitManualLead() {
+      const name = document.getElementById('manLeadName').value.trim();
+      const phone = document.getElementById('manLeadPhone').value.trim();
+      if (!name) {
+        showToast('Please enter candidate / client name');
+        document.getElementById('manLeadName').focus();
+        return;
+      }
+      if (!phone) {
+        showToast('Please enter phone number');
+        document.getElementById('manLeadPhone').focus();
+        return;
+      }
+
+      const email = document.getElementById('manLeadEmail').value.trim();
+      const category = document.getElementById('manLeadCategory').value;
+      const skills = document.getElementById('manLeadSkills').value.trim() || 'General';
+      const recruiter = document.getElementById('manLeadRecruiter').value || (currentUser?.name || 'Jinendra');
+      const curCtc = document.getElementById('manLeadCurCtc').value.trim();
+      const expCtc = document.getElementById('manLeadExpCtc').value.trim();
+      const notice = document.getElementById('manLeadNotice').value.trim();
+      const status = document.getElementById('manLeadStatus').value;
+      const channel = document.getElementById('manLeadChannel').value;
+      const notes = document.getElementById('manLeadNotes').value.trim();
+
+      const btn = document.getElementById('btnSubmitManualLead');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+      try {
+        const payload = {
+          candidate_name: name,
+          candidate_phone: phone,
+          candidate_email: email,
+          category: category,
+          skills: skills,
+          recruiter_name: recruiter,
+          current_ctc: curCtc,
+          expected_ctc: expCtc,
+          notice_period: notice,
+          status: status,
+          channel: channel,
+          source: channel,
+          notes: notes,
+          recruiterNotes: notes,
+          text: notes
+        };
+
+        const res = await fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === 'success' || data.status === 'ok') {
+          showToast('✓ Lead entry saved successfully!');
+          closeModal('manualLeadModal');
+          refreshAllData();
+        } else {
+          showToast('Failed to save: ' + (data.message || 'Unknown error'));
+        }
+      } catch (err) {
+        showToast('Network error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Save Entry';
+      }
+    }
+
+    // ==================== EXCEL / CSV BATCH IMPORT ====================
+    let parsedImportRows = [];
+    let detectedHeaders = [];
+
+    function openImportModal() {
+      resetImportFile();
+      // Populate default recruiter selector
+      const recSelect = document.getElementById('importDefaultRecruiter');
+      if (recSelect) {
+        recSelect.innerHTML = '';
+        const list = Array.isArray(window.recruitersList) && window.recruitersList.length
+          ? window.recruitersList
+          : ['Jinendra', 'Suhani Sisodiya', 'Divanshi Gupta'];
+        list.forEach(r => {
+          const name = typeof r === 'string' ? r : (r.name || r.id);
+          if (name) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            recSelect.appendChild(opt);
+          }
+        });
+        const activeRec = localStorage.getItem('activeRecruiter') || 'Jinendra';
+        recSelect.value = activeRec;
+      }
+      document.getElementById('importModal').style.display = 'flex';
+    }
+
+    function resetImportFile() {
+      parsedImportRows = [];
+      detectedHeaders = [];
+      const fileInput = document.getElementById('importFileInput');
+      if (fileInput) fileInput.value = '';
+      document.getElementById('importDropzone').style.display = 'block';
+      document.getElementById('importFileInfo').style.display = 'none';
+      document.getElementById('importConfigSection').style.display = 'none';
+      document.getElementById('importMappingSection').style.display = 'none';
+      document.getElementById('importPreviewSection').style.display = 'none';
+      const btn = document.getElementById('btnSubmitImport');
+      if (btn) btn.disabled = true;
+    }
+
+    function handleImportDrop(e) {
+      e.preventDefault();
+      const dropzone = document.getElementById('importDropzone');
+      dropzone.style.borderColor = '#cbd5e1';
+      dropzone.style.background = '#f8fafc';
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleImportFile(e.dataTransfer.files[0]);
+      }
+    }
+
+    function toggleImportMapping() {
+      const body = document.getElementById('importMappingBody');
+      const icon = document.getElementById('importMappingToggleIcon');
+      if (body.style.display === 'none') {
+        body.style.display = 'grid';
+        icon.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+      } else {
+        body.style.display = 'none';
+        icon.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+      }
+    }
+
+    async function handleImportFile(file) {
+      if (!file) return;
+      const validExts = ['.xlsx', '.xls', '.csv'];
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if (!validExts.includes(ext)) {
+        showToast('Please select a valid Excel (.xlsx, .xls) or CSV (.csv) file');
+        return;
+      }
+
+      try {
+        const data = await file.arrayBuffer();
+        if (typeof XLSX === 'undefined') {
+          throw new Error('Excel parser library (SheetJS) is loading. Please try again in 2 seconds.');
+        }
+
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        parsedImportRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (!parsedImportRows.length) {
+          showToast('Selected file has no data rows');
+          return;
+        }
+
+        detectedHeaders = Object.keys(parsedImportRows[0]);
+
+        // Update UI
+        document.getElementById('importDropzone').style.display = 'none';
+        const infoEl = document.getElementById('importFileInfo');
+        infoEl.style.display = 'flex';
+        document.getElementById('importFileName').textContent = file.name;
+        document.getElementById('importRowCount').textContent = parsedImportRows.length + ' rows';
+
+        document.getElementById('importConfigSection').style.display = 'block';
+        document.getElementById('importMappingSection').style.display = 'block';
+        document.getElementById('importPreviewSection').style.display = 'block';
+
+        populateMappingDropdowns(detectedHeaders);
+        autoDetectAndSelectColumns(detectedHeaders);
+        renderImportPreview();
+
+        const btn = document.getElementById('btnSubmitImport');
+        btn.disabled = false;
+        document.getElementById('btnSubmitImportText').textContent = `Import ${parsedImportRows.length} Leads into CRM`;
+      } catch (err) {
+        showToast('Failed to parse file: ' + err.message);
+      }
+    }
+
+    function populateMappingDropdowns(headers) {
+      const selects = [
+        'mapColName', 'mapColPhone', 'mapColEmail', 'mapColCompany',
+        'mapColRole', 'mapColCtc', 'mapColRecruiter', 'mapColNotes'
+      ];
+      selects.forEach(selId => {
+        const el = document.getElementById(selId);
+        if (!el) return;
+        el.innerHTML = '<option value="">-- None / Skip --</option>';
+        headers.forEach(h => {
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.textContent = h;
+          el.appendChild(opt);
+        });
+      });
+    }
+
+    function autoDetectAndSelectColumns(headers) {
+      function findBest(patterns) {
+        for (const p of patterns) {
+          const found = headers.find(h => {
+            const clean = h.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const target = p.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return clean === target || clean.includes(target);
+          });
+          if (found) return found;
+        }
+        return '';
+      }
+
+      const firstNameCol = findBest(['firstname', 'first']);
+      const lastNameCol = findBest(['lastname', 'last']);
+      const nameCol = findBest(['candidatename', 'clientname', 'fullname', 'name', 'contactperson', 'contactname']);
+      
+      const setSelect = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val) el.value = val;
+      };
+
+      if (firstNameCol) {
+        setSelect('mapColName', firstNameCol);
+      } else if (nameCol) {
+        setSelect('mapColName', nameCol);
+      }
+
+      setSelect('mapColPhone', findBest(['phone', 'mobile', 'contactno', 'contactnumber', 'contact', 'cell', 'tel']));
+      setSelect('mapColEmail', findBest(['email', 'mail', 'emailaddress', 'e-mail']));
+      setSelect('mapColCompany', findBest(['company', 'organization', 'employer', 'org', 'firm']));
+      setSelect('mapColRole', findBest(['role', 'position', 'designation', 'jobtitle', 'skills', 'requirement']));
+      setSelect('mapColCtc', findBest(['ctc', 'currentctc', 'dealvalue', 'budget', 'salary', 'expectedctc']));
+      setSelect('mapColRecruiter', findBest(['leadowner', 'recruiter', 'owner', 'assignedto', 'agent']));
+      setSelect('mapColNotes', findBest(['leadsource', 'source', 'notes', 'remarks', 'discussion', 'comment']));
+    }
+
+    function renderImportPreview() {
+      const tbody = document.getElementById('importPreviewTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const nameCol = document.getElementById('mapColName').value;
+      const phoneCol = document.getElementById('mapColPhone').value;
+      const emailCol = document.getElementById('mapColEmail').value;
+      const compCol = document.getElementById('mapColCompany').value;
+      const roleCol = document.getElementById('mapColRole').value;
+      const recCol = document.getElementById('mapColRecruiter').value;
+      const notesCol = document.getElementById('mapColNotes').value;
+      const defaultRec = document.getElementById('importDefaultRecruiter').value;
+
+      const lastNameCol = detectedHeaders.find(h => /last\s*name/i.test(h));
+
+      const previewRows = parsedImportRows.slice(0, 5);
+      previewRows.forEach(row => {
+        let nameVal = nameCol ? String(row[nameCol] || '') : '';
+        if (lastNameCol && nameCol && /first/i.test(nameCol) && row[lastNameCol]) {
+          nameVal = `${nameVal} ${row[lastNameCol]}`.trim();
+        }
+        const phoneVal = phoneCol ? String(row[phoneCol] || '') : '';
+        const emailVal = emailCol ? String(row[emailCol] || '') : '';
+        const compVal = compCol ? String(row[compCol] || '') : '';
+        const roleVal = roleCol ? String(row[roleCol] || '') : '';
+        const recVal = (recCol && row[recCol]) ? String(row[recCol]) : defaultRec;
+        const notesVal = notesCol ? String(row[notesCol] || '') : '';
+
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #f1f5f9';
+        tr.innerHTML = `
+          <td style="padding:6px 10px; font-weight:600; color:#0f172a;">${escapeHtml(nameVal || '—')}</td>
+          <td style="padding:6px 10px; color:#475569;">${escapeHtml(phoneVal || '—')}</td>
+          <td style="padding:6px 10px; color:#475569;">${escapeHtml(emailVal || '—')}</td>
+          <td style="padding:6px 10px; color:#475569;">${escapeHtml(compVal || '—')}</td>
+          <td style="padding:6px 10px; color:#475569;">${escapeHtml(roleVal || '—')}</td>
+          <td style="padding:6px 10px; color:#4f46e5; font-weight:600;">${escapeHtml(recVal || '—')}</td>
+          <td style="padding:6px 10px; color:#64748b; font-size:11px;">${escapeHtml(notesVal || '—')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function submitImportLeads() {
+      if (!parsedImportRows.length) {
+        showToast('No records to import');
+        return;
+      }
+
+      const nameCol = document.getElementById('mapColName').value;
+      const phoneCol = document.getElementById('mapColPhone').value;
+      const emailCol = document.getElementById('mapColEmail').value;
+      const compCol = document.getElementById('mapColCompany').value;
+      const roleCol = document.getElementById('mapColRole').value;
+      const ctcCol = document.getElementById('mapColCtc').value;
+      const recCol = document.getElementById('mapColRecruiter').value;
+      const notesCol = document.getElementById('mapColNotes').value;
+      const defaultRec = document.getElementById('importDefaultRecruiter').value;
+      const defaultStatus = document.getElementById('importDefaultStatus').value;
+      const lastNameCol = detectedHeaders.find(h => /last\s*name/i.test(h));
+
+      const items = parsedImportRows.map(row => {
+        let nameVal = nameCol ? String(row[nameCol] || '') : '';
+        if (lastNameCol && nameCol && /first/i.test(nameCol) && row[lastNameCol]) {
+          nameVal = `${nameVal} ${row[lastNameCol]}`.trim();
+        }
+        return {
+          name: nameVal,
+          phone: phoneCol ? String(row[phoneCol] || '') : '',
+          email: emailCol ? String(row[emailCol] || '') : '',
+          company: compCol ? String(row[compCol] || '') : '',
+          role: roleCol ? String(row[roleCol] || '') : '',
+          ctc: ctcCol ? String(row[ctcCol] || '') : '',
+          recruiter: (recCol && row[recCol]) ? String(row[recCol]) : defaultRec,
+          status: defaultStatus,
+          notes: notesCol ? String(row[notesCol] || '') : ''
+        };
+      });
+
+      const btn = document.getElementById('btnSubmitImport');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importing...';
+
+      try {
+        const res = await fetch('/api/leads/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items, defaultRecruiter: defaultRec })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          showToast(`✓ Imported successfully! ${data.created} new leads created, ${data.updated} updated.`);
+          closeModal('importModal');
+          refreshAllData();
+        } else {
+          showToast('Import failed: ' + (data.message || 'Unknown error'));
+        }
+      } catch (err) {
+        showToast('Error during import: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="btnSubmitImportText">Import Leads into CRM</span>';
       }
     }
 

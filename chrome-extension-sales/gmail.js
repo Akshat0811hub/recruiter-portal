@@ -65,7 +65,7 @@
 
   let cachedConfig = {
     recruiterName: "Jinendra",
-    webhookUrl: "http://192.168.1.34:3000/api/webhook",
+    webhookUrl: "http://localhost:3000/api/sales/webhook",
     autoSync: true,
     stealthMode: false
   };
@@ -476,7 +476,7 @@
       chrome.runtime.sendMessage(
         {
           action: "SYNC_LEAD",
-          webhookUrl: cachedConfig.webhookUrl || "http://192.168.1.34:3000/api/webhook",
+          webhookUrl: cachedConfig.webhookUrl || "http://localhost:3000/api/sales/webhook",
           payload
         },
         (response) => {

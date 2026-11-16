@@ -17,7 +17,8 @@ const os = require('os');
 const salesBackend = require('./sales-backend');
 
 const PORT = Number(process.env.PORT) || 3000;
-const DATA_DIR = path.join(__dirname, 'data');
+const IS_VERCEL = !!process.env.VERCEL;
+const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, 'data');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
@@ -27,6 +28,19 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+
+if (IS_VERCEL) {
+  const seedDir = path.join(__dirname, 'data');
+  if (fs.existsSync(seedDir)) {
+    ['users.json', 'leads.json', 'recruiters.json', 'call_logs.json'].forEach(f => {
+      const src = path.join(seedDir, f);
+      const dst = path.join(DATA_DIR, f);
+      if (fs.existsSync(src) && !fs.existsSync(dst)) {
+        try { fs.copyFileSync(src, dst); } catch (_) {}
+      }
+    });
+  }
+}
 
 // =========================================================================
 // LOCAL CLOCK / IST TIME UTILITIES (Matches System Wall Clock Exactly)
@@ -208,9 +222,10 @@ function broadcastEvent(eventType, payload = {}) {
   }
 }
 
-setInterval(() => {
+const heartbeatTimer = setInterval(() => {
   broadcastEvent('heartbeat', {});
 }, 20000);
+if (heartbeatTimer.unref) heartbeatTimer.unref();
 
 // =========================================================================
 // DETERMINISTIC FIELD EXTRACTION (Fast, Accurate, Zero AI Bloat)
@@ -234,15 +249,51 @@ const NON_NAME_WORDS = new Set([
   'ui', 'ux', 'qa', 'support', 'admin', 'account', 'accounts', 'orbitouch', 'outsourcing',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'today', 'yesterday',
   'suhani', 'sisodiya', 'pooja', 'jyoti', 'akshay', 'munisha', 'sakshi', 'akshita', 'divanshi',
-  'gunjan', 'kamakshi', 'manshi', 'shriparna', 'neetu', 'kajal'
+  'gunjan', 'kamakshi', 'manshi', 'shriparna', 'neetu', 'kajal', 'jinendra'
 ]);
+
+const SAMPLE_RECRUITERS_BLACKLIST = new Set([
+  'amit', 'neha', 'vikram', 'anjali', 'rohan', 'kavita', 'deepak', 'tl'
+]);
+
+const CANONICAL_RECRUITER_MAP = {
+  jinendra: 'Jinendra',
+  suhani: 'Suhani Sisodiya',
+  'suhani sisodiya': 'Suhani Sisodiya',
+  divanshi: 'Divanshi Gupta',
+  'divanshi gupta': 'Divanshi Gupta',
+  divyanshi: 'Divanshi Gupta',
+  'divyanshi gupta': 'Divanshi Gupta',
+  sakshi: 'Sakshi Kaur',
+  'sakshi kaur': 'Sakshi Kaur',
+  kamakshi: 'Kamakshi Kaushik',
+  'kamakshi kaushik': 'Kamakshi Kaushik',
+  manshi: 'Manshi Agnihotri',
+  'manshi agnihotri': 'Manshi Agnihotri',
+  jyoti: 'Jyoti Shah',
+  'jyoti shah': 'Jyoti Shah',
+  pooja: 'Pooja Singh',
+  'pooja singh': 'Pooja Singh',
+  munisha: 'Munisha Thakur',
+  'munisha thakur': 'Munisha Thakur',
+  neetu: 'Neetu Sharma',
+  'neetu sharma': 'Neetu Sharma',
+  akshay: 'Akshay Pandey',
+  'akshay pandey': 'Akshay Pandey',
+  akshita: 'Akshita Nayal',
+  'akshita nayal': 'Akshita Nayal',
+  gunjan: 'Gunjan Sharma',
+  'gunjan sharma': 'Gunjan Sharma',
+  shriparna: 'Shriparna Acharya',
+  'shriparna acharya': 'Shriparna Acharya'
+};
 
 const INTERNAL_GROUP_PATTERNS = [
   /orbitouch\s*outsourcing/i,
   /daily\s*working\s*\/\s*reporting/i,
   /job\s*post\s*\/\s*response/i,
   /hr\s*agency\s*orbitouch/i,
-  /team\s+(?:kajal|neetu|suhani|rahul)/i
+  /team\s+(?:kajal|neetu|suhani|rahul|jinendra)/i
 ];
 
 function canonicalRecruiterName(input, recruiterEmail = '') {
@@ -266,13 +317,16 @@ function canonicalRecruiterName(input, recruiterEmail = '') {
     .replace(/\s*\(Alt\)$/i, '')
     .replace(/\s+/g, ' ')
     .trim();
-  if (!clean) return 'Suhani Sisodiya';
+  if (!clean) return 'Unassigned';
 
   const lower = clean.toLowerCase();
-  const inputFirst = lower.split(/\s+/)[0];
+  if (lower === 'unassigned' || lower === 'unknown' || lower === 'none') return 'Unassigned';
+  if (SAMPLE_RECRUITERS_BLACKLIST.has(lower)) return 'Unassigned';
 
-  // Common aliases & phonetic variations
-  if (lower === 'divyanshi' || inputFirst === 'divyanshi') return 'Divanshi Gupta';
+  if (CANONICAL_RECRUITER_MAP[lower]) return CANONICAL_RECRUITER_MAP[lower];
+
+  const inputFirst = lower.split(/\s+/)[0];
+  if (CANONICAL_RECRUITER_MAP[inputFirst]) return CANONICAL_RECRUITER_MAP[inputFirst];
 
   for (const r of recruiters) {
     const rName = (r.name || '').replace(/\s*\(Alt\)$/i, '').trim();
@@ -303,9 +357,9 @@ function isRecruiterOrSystemEmail(email) {
 function detectRecruiterInText(text) {
   if (!text) return '';
   const m =
-    String(text).match(/(?:this\s+side|this\s+is|i\s+am|myself)\s+(pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu)\b/i) ||
-    String(text).match(/(?:regards|thanks\s*(?:&|and)?\s*regards)[\s,:-]+(pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu)\b/i) ||
-    String(text).match(/\b(pooja|jyoti\.shah|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu(?:\.sharma)?)@orbitouch-hr\.com/i);
+    String(text).match(/(?:this\s+side|this\s+is|i\s+am|myself)\s+(pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu|jinendra)\b/i) ||
+    String(text).match(/(?:regards|thanks\s*(?:&|and)?\s*regards)[\s,:-]+(pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu|jinendra)\b/i) ||
+    String(text).match(/\b(pooja|jyoti\.shah|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu(?:\.sharma)?|jinendra)@orbitouch-hr\.com/i);
   if (m && m[1]) {
     const key = m[1].toLowerCase().replace('.shah', '').replace('.sharma', '');
     return canonicalRecruiterName(key);
@@ -318,7 +372,7 @@ function isRecruiterOutreachText(text) {
   const s = String(text).trim();
   return (
     /orbitouch/i.test(s) ||
-    /(?:this\s+side|this\s+is|i\s+am|myself)\s+(?:pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu)\b/i.test(s) ||
+    /(?:this\s+side|this\s+is|i\s+am|myself)\s+(?:pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu|jinendra)\b/i.test(s) ||
     /(?:this\s+side|this\s+is|i\s+am|myself)\s+[a-z]+\s*\(\s*hr\s*\)/i.test(s) ||
     /got\s+your\s+(?:profile|resume|cv|number|contact|reference)\s+from\s+(?:naukri|shine|linkedin|indeed|apna|workindia|foundit|monster|portal)/i.test(s) ||
     /\bwe\s+are\s+hiring\s+for\b/i.test(s) ||
@@ -329,11 +383,11 @@ function isRecruiterOutreachText(text) {
     /\brevert\s+(?:me\s+)?back\s+(?:along\s+)?with\s+your\s+updated\s+(?:resume|cv)\b/i.test(s) ||
     /\binterview\s+has\s+been\s+scheduled\b/i.test(s) ||
     /\bkindly\s+share\s+your\s+(?:updated\s+)?(?:resume|cv|current\s+ctc)\b/i.test(s) ||
-    /(?:regards|thanks\s*(?:&|and)?\s*regards)[\s,:-]+(?:pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu)\b/i.test(s)
+    /(?:regards|thanks\s*(?:&|and)?\s*regards)[\s,:-]+(?:pooja|jyoti|suhani|akshay|munisha|sakshi|akshita|divanshi|gunjan|kamakshi|manshi|shriparna|neetu|jinendra)\b/i.test(s)
   );
 }
 
-function normalizeTranscriptSpeakers(transcript, defaultRecruiter = 'Suhani Sisodiya') {
+function normalizeTranscriptSpeakers(transcript, defaultRecruiter = '') {
   if (!transcript) return '';
   const raw = String(transcript).replace(/\r\n/g, '\n').trim();
   const blocks = [];
@@ -356,13 +410,16 @@ function normalizeTranscriptSpeakers(transcript, defaultRecruiter = 'Suhani Siso
     }
   }
 
-  let recName = canonicalRecruiterName(defaultRecruiter);
+  let recName = '';
   for (const b of blocks) {
     const det = detectRecruiterInText(b.body);
-    if (det) {
+    if (det && det !== 'Unassigned') {
       recName = det;
       break;
     }
+  }
+  if (!recName && defaultRecruiter && defaultRecruiter !== 'Unassigned') {
+    recName = canonicalRecruiterName(defaultRecruiter);
   }
 
   for (let i = 0; i < blocks.length; i++) {
@@ -371,12 +428,12 @@ function normalizeTranscriptSpeakers(transcript, defaultRecruiter = 'Suhani Siso
     const timeMatch = b.rawHeader.match(/\(([^)]+)\)\s*$/);
     const timePart = timeMatch ? ` (${timeMatch[1].trim()})` : '';
     const det = detectRecruiterInText(b.body);
-    const activeRec = det || recName;
+    const activeRec = (det && det !== 'Unassigned') ? det : (recName && recName !== 'Unassigned' ? recName : '');
 
     if (/^Recruiter/i.test(b.rawHeader)) {
-      b.rawHeader = `Recruiter - ${activeRec}${timePart}`;
+      b.rawHeader = activeRec ? `Recruiter - ${activeRec}${timePart}` : `Recruiter${timePart}`;
     } else if (isRecruiterOutreachText(b.body)) {
-      b.rawHeader = `Recruiter - ${activeRec}${timePart}`;
+      b.rawHeader = activeRec ? `Recruiter - ${activeRec}${timePart}` : `Recruiter${timePart}`;
     }
   }
 
@@ -892,14 +949,16 @@ function processLeadIngest(payload) {
     return { status: 'ignored', message: 'Internal team group skipped' };
   }
 
-  const incomingRecruiterHint = canonicalRecruiterName(
-    sanitizeString(payload.recruiter_name || payload.recruiter || 'Suhani Sisodiya', 100),
+  const detectedRec = detectRecruiterInText(text);
+  const rawHint = payload.recruiter_name || payload.recruiter || detectedRec || '';
+  const incomingRecruiterHint = rawHint ? canonicalRecruiterName(
+    sanitizeString(rawHint, 100),
     payload.recruiter_email || ''
-  );
+  ) : 'Unassigned';
 
   // Phone calls never create or inject synthetic chat text; normalize speaker attribution for WhatsApp transcripts
   const rawChatText = isCall ? '' : stripSyntheticCallText(text);
-  const chatText = isWhatsApp ? normalizeTranscriptSpeakers(rawChatText, incomingRecruiterHint) : rawChatText;
+  const chatText = isWhatsApp ? normalizeTranscriptSpeakers(rawChatText, incomingRecruiterHint !== 'Unassigned' ? incomingRecruiterHint : '') : rawChatText;
 
   const extractedName = extractCandidateName(chatText || text);
   let candidateName = rawCandidateName;
@@ -1036,16 +1095,19 @@ function processLeadIngest(payload) {
       existing.activityDates.sort();
     }
 
-    const incomingRec = canonicalRecruiterName(
-      sanitizeString(payload.recruiter_name || payload.recruiter || existing.recruiter || 'Suhani Sisodiya', 100),
+    const detectedInChat = detectRecruiterInText(chatText || text);
+    const incomingRecRaw = payload.recruiter_name || payload.recruiter || detectedInChat || '';
+    const incomingRec = incomingRecRaw ? canonicalRecruiterName(
+      sanitizeString(incomingRecRaw, 100),
       payload.recruiter_email || ''
-    );
-    if (incomingRec && incomingRec !== 'Unknown') {
-      if (!existing.recruiter || existing.recruiter === 'Unknown' || canonicalRecruiterName(existing.recruiter) === incomingRec) {
-        existing.recruiter = incomingRec;
-      } else {
-        existing.recruiter = canonicalRecruiterName(existing.recruiter);
-      }
+    ) : '';
+
+    if (incomingRec && incomingRec !== 'Unknown' && incomingRec !== 'Unassigned') {
+      existing.recruiter = incomingRec;
+    } else if (!existing.recruiter || existing.recruiter === 'Unknown') {
+      existing.recruiter = incomingRec || 'Unassigned';
+    } else {
+      existing.recruiter = canonicalRecruiterName(existing.recruiter);
     }
 
     // Move recently updated lead to top
@@ -1058,10 +1120,12 @@ function processLeadIngest(payload) {
   }
 
   // CREATE BRAND NEW LEAD
-  const recruiterName = canonicalRecruiterName(
-    sanitizeString(payload.recruiter_name || payload.recruiter || 'Suhani Sisodiya', 100),
+  const detectedNewLeadRec = detectRecruiterInText(chatText || text);
+  const rawNewRec = payload.recruiter_name || payload.recruiter || detectedNewLeadRec || '';
+  const recruiterName = rawNewRec ? canonicalRecruiterName(
+    sanitizeString(rawNewRec, 100),
     payload.recruiter_email || ''
-  );
+  ) : 'Unassigned';
   const currentCtc = sanitizeString(payload.current_ctc || extractCurrentCtc(chatText), 60);
   const expectedCtc = sanitizeString(payload.expected_ctc || extractExpectedCtc(chatText), 60);
   const noticePeriod = sanitizeString(payload.notice_period || extractNoticePeriod(chatText), 60);
@@ -1091,11 +1155,11 @@ function processLeadIngest(payload) {
     callHistory: payload.callEntry ? [payload.callEntry] : [],
     lastCall: payload.callEntry || null,
     callDuration: payload.callEntry ? payload.callEntry.durationFormatted : '',
-    rawText: (isWhatsApp || isEmail) ? chatText : '',
+    rawText: (isWhatsApp || isEmail) ? chatText : sanitizeString(payload.notes || payload.recruiterNotes || payload.text || '', 5000),
     followUpNeeded: Boolean((chatText && detectFollowUpSignal(chatText)) || (payload.callEntry && payload.callEntry.direction === 'missed')),
     followUpDate: sanitizeString(payload.followUpDate || '', 40),
-    recruiterNotes: sanitizeString(payload.recruiterNotes || '', 2000),
-    status: 'New Lead'
+    recruiterNotes: sanitizeString(payload.recruiterNotes || payload.notes || '', 2000),
+    status: sanitizeString(payload.status || 'New Lead', 40)
   };
   newLead.channel = computeCleanChannel(newLead, cleanChannelLabel);
 
@@ -1104,6 +1168,125 @@ function processLeadIngest(payload) {
 
   broadcastEvent('lead_created', { leadId: newLead.id, candidateName: newLead.candidateName, channel: newLead.channel });
   return { status: 'success', action: 'created', lead: newLead };
+}
+
+// =========================================================================
+// BATCH EXCEL / CSV LEADS IMPORT (Auto-Mapping & Fast Ingestion)
+// =========================================================================
+
+function processBatchLeadImport(items, defaultRecruiter = '') {
+  if (!Array.isArray(items) || items.length === 0) {
+    return { status: 'error', message: 'No lead items provided in import array' };
+  }
+  const leads = getLeads();
+  let createdCount = 0;
+  let updatedCount = 0;
+  const currentTime = nowLocal();
+  const currentDay = todayKey();
+
+  for (const raw of items) {
+    if (!raw || typeof raw !== 'object') continue;
+
+    const candidatePhone = sanitizePhone(raw.candidate_phone || raw.phone || raw.mobile || raw.contact || '');
+    const pKey = phoneKey10(candidatePhone);
+    const candidateEmail = sanitizeEmail(raw.candidate_email || raw.email || '');
+
+    let candidateName = sanitizeString(raw.candidate_name || raw.name || raw.client_name || raw.contact_name || '', 100);
+    if (!candidateName && (raw.first_name || raw.last_name)) {
+      candidateName = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim();
+    }
+    if (!candidateName || isGenericCandidateName(candidateName)) {
+      if (pKey) candidateName = `Candidate (${pKey.slice(-4)})`;
+      else if (candidateEmail) candidateName = candidateEmail.split('@')[0];
+      else candidateName = 'Imported Lead';
+    }
+
+    // Determine owner / recruiter
+    const rawRec = raw.recruiter_name || raw.recruiter || raw.owner || raw.lead_owner || raw.salesperson || defaultRecruiter || '';
+    let recruiterName = rawRec ? canonicalRecruiterName(rawRec) : 'Unassigned';
+    if ((!recruiterName || recruiterName === 'Unassigned') && defaultRecruiter) {
+      recruiterName = canonicalRecruiterName(defaultRecruiter);
+    }
+
+    const currentCtc = sanitizeString(raw.current_ctc || raw.company || raw.company_name || '', 60);
+    const expectedCtc = sanitizeString(raw.expected_ctc || raw.deal_value || raw.budget || '', 60);
+    const noticePeriod = sanitizeString(raw.notice_period || raw.service || raw.service_requirement || '', 60);
+    const skills = sanitizeString(raw.skills || raw.role || raw.requirement || raw.job_title || raw.designation || 'General', 250);
+    const status = sanitizeString(raw.status || raw.stage || 'New Lead', 40);
+    const channel = sanitizeString(raw.channel || raw.source || raw.lead_source || 'Excel Import', 50);
+    const notes = sanitizeString(raw.notes || raw.recruiterNotes || raw.remarks || raw.description || raw.text || '', 5000);
+    const category = sanitizeString(raw.category || (skills && skills !== 'General' ? 'Experienced / Job Change' : 'General Enquiry'), 60);
+
+    // Deduplicate by Email -> Phone
+    let existingIndex = -1;
+    if (candidateEmail) {
+      existingIndex = leads.findIndex(l => sanitizeEmail(l.email || '') === candidateEmail);
+    }
+    if (existingIndex === -1 && pKey.length >= 10) {
+      existingIndex = leads.findIndex(l => phoneKey10(l.phone) === pKey);
+    }
+
+    if (existingIndex !== -1) {
+      const existing = leads[existingIndex];
+      if (!existing.phone && candidatePhone) existing.phone = candidatePhone;
+      if (!existing.email && candidateEmail) existing.email = candidateEmail;
+      if (isGenericCandidateName(existing.candidateName) && !isGenericCandidateName(candidateName)) {
+        existing.candidateName = candidateName;
+      }
+      if (skills && (!existing.skills || existing.skills === 'General')) existing.skills = skills;
+      if (currentCtc && !existing.currentCtc) existing.currentCtc = currentCtc;
+      if (expectedCtc && !existing.expectedCtc) existing.expectedCtc = expectedCtc;
+      if (noticePeriod && !existing.noticePeriod) existing.noticePeriod = noticePeriod;
+      if (recruiterName && recruiterName !== 'Unassigned' && (!existing.recruiter || existing.recruiter === 'Unassigned')) {
+        existing.recruiter = recruiterName;
+      }
+      if (notes) {
+        existing.recruiterNotes = existing.recruiterNotes ? (existing.recruiterNotes + '\n' + notes) : notes;
+        existing.rawText = existing.rawText ? (existing.rawText + '\n' + notes) : notes;
+      }
+      existing.lastUpdated = currentTime;
+      if (!existing.activityDates.includes(currentDay)) {
+        existing.activityDates.push(currentDay);
+        existing.activityDates.sort();
+      }
+      updatedCount++;
+    } else {
+      const newLead = {
+        id: 'LEAD-' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 90 + 10),
+        timestamp: currentTime,
+        lastUpdated: currentTime,
+        dateKey: currentDay,
+        activityDates: [currentDay],
+        recruiter: recruiterName,
+        channel: channel,
+        category: category,
+        candidateName,
+        phone: candidatePhone,
+        email: candidateEmail,
+        currentCtc,
+        expectedCtc,
+        noticePeriod,
+        skills,
+        keywords: [],
+        whatsappTranscript: '',
+        emailTranscript: '',
+        callHistory: [],
+        lastCall: null,
+        callDuration: '',
+        rawText: notes,
+        followUpNeeded: false,
+        followUpDate: '',
+        recruiterNotes: notes,
+        status: status
+      };
+      leads.unshift(newLead);
+      createdCount++;
+    }
+  }
+
+  saveLeads(leads);
+  broadcastEvent('leads_imported', { total: items.length, created: createdCount, updated: updatedCount });
+  return { status: 'success', total: items.length, created: createdCount, updated: updatedCount };
 }
 
 // =========================================================================
@@ -1131,16 +1314,17 @@ function processCallLog(data) {
   }
 
   const pKey = phoneKey10(phone);
-  const recruiterName = canonicalRecruiterName(
-    sanitizeString(data.recruiter_name || data.recruiter || 'Suhani Sisodiya', 100),
+  const leads = getLeads();
+  const matchedLead = pKey.length >= 10 ? leads.find(l => phoneKey10(l.phone) === pKey) : null;
+  const rawCallRec = data.recruiter_name || data.recruiter || '';
+  let recruiterName = rawCallRec ? canonicalRecruiterName(
+    sanitizeString(rawCallRec, 100),
     data.recruiter_email || ''
-  );
+  ) : (matchedLead && matchedLead.recruiter && matchedLead.recruiter !== 'Unassigned' ? matchedLead.recruiter : 'Unassigned');
   const recruiterPhone = sanitizePhone(data.recruiter_phone || '');
   let candidateName = sanitizeString(data.candidate_name || data.name || data.contact_name || '', 100);
 
   // Enrich candidate name automatically if this number already exists in CRM Leads!
-  const leads = getLeads();
-  const matchedLead = pKey.length >= 10 ? leads.find(l => phoneKey10(l.phone) === pKey) : null;
   if (isGenericCandidateName(candidateName) && matchedLead && !isGenericCandidateName(matchedLead.candidateName)) {
     candidateName = matchedLead.candidateName;
   }
@@ -1278,7 +1462,7 @@ function processCallLog(data) {
 const activeCalls = new Map(); // recruiterKey -> { recruiterName, phone, candidateName, direction, status, ringStartMs, talkStartMs, startLocal, startDisplay }
 
 // Auto-cleanup any orphaned live call older than 30 minutes
-setInterval(() => {
+const cleanupCallsTimer = setInterval(() => {
   const now = Date.now();
   let changed = false;
   for (const [key, item] of activeCalls.entries()) {
@@ -1290,6 +1474,7 @@ setInterval(() => {
   }
   if (changed) broadcastLiveCallsState();
 }, 60 * 1000);
+if (cleanupCallsTimer.unref) cleanupCallsTimer.unref();
 
 function getActiveCallsList() {
   const now = Date.now();
@@ -1314,10 +1499,11 @@ function resolveLiveCandidateName(phone, rawName) {
 
 function processLiveCallEvent(data, eventTimeMs = Date.now()) {
   const event = sanitizeString(data.event || data.state || 'ended', 30).toLowerCase();
-  const recruiterName = canonicalRecruiterName(
-    sanitizeString(data.recruiter || data.recruiter_name || 'Suhani Sisodiya', 100),
+  const rawLiveRec = data.recruiter || data.recruiter_name || '';
+  const recruiterName = rawLiveRec ? canonicalRecruiterName(
+    sanitizeString(rawLiveRec, 100),
     data.recruiter_email || ''
-  );
+  ) : 'Unassigned';
   const rKey = recruiterName.toLowerCase().trim();
 
   const incomingPhone = sanitizePhone(data.phone || data.candidate_phone || data.number || '');
@@ -1607,10 +1793,10 @@ function buildCallDateCounts(logs) {
 }
 
 // =========================================================================
-// HTTP SERVER
+// HTTP SERVER & REQUEST HANDLER
 // =========================================================================
 
-const server = http.createServer(async (req, res) => {
+async function appHandler(req, res) {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const method = req.method;
@@ -1618,7 +1804,7 @@ const server = http.createServer(async (req, res) => {
   // CORS & Security Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-User-Role, X-User-Name');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-User-Role, X-User-Name, X-Portal, *');
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
   if (method === 'OPTIONS') {
@@ -1679,7 +1865,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     // --- HEALTH / EXTENSION AUTO-DISCOVERY PING ---
-    if ((pathname === '/api/health' || pathname === '/api/ping') && method === 'GET') {
+    if ((pathname === '/api/health' || pathname === '/api/ping' || pathname.endsWith('/api/ping') || pathname.endsWith('/api/health')) && method === 'GET') {
       const ip = getLocalIp();
       const host = os.hostname();
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1886,21 +2072,21 @@ const server = http.createServer(async (req, res) => {
       baseRecruiters.forEach(r => {
         const cName = canonicalRecruiterName(r.name);
         const key = cName.toLowerCase().trim();
-        if (!knownMap.has(key)) {
+        if (key && key !== 'unassigned' && key !== 'unknown' && !SAMPLE_RECRUITERS_BLACKLIST.has(key) && !knownMap.has(key)) {
           knownMap.set(key, { ...r, name: cName });
         }
       });
       allLeads.forEach(l => {
         const cName = canonicalRecruiterName(l.recruiter || '');
         const key = cName.toLowerCase().trim();
-        if (key && key !== 'unknown' && !knownMap.has(key)) {
+        if (key && key !== 'unknown' && key !== 'unassigned' && !SAMPLE_RECRUITERS_BLACKLIST.has(key) && !knownMap.has(key)) {
           knownMap.set(key, { id: 'REC-DYN-' + knownMap.size, name: cName, status: 'Active' });
         }
       });
       allCalls.forEach(c => {
         const cName = canonicalRecruiterName(c.recruiterName || '');
         const key = cName.toLowerCase().trim();
-        if (key && key !== 'unknown' && !knownMap.has(key)) {
+        if (key && key !== 'unknown' && key !== 'unassigned' && !SAMPLE_RECRUITERS_BLACKLIST.has(key) && !knownMap.has(key)) {
           knownMap.set(key, { id: 'REC-DYN-' + knownMap.size, name: cName, status: 'Active' });
         }
       });
@@ -1950,6 +2136,18 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // --- BATCH EXCEL / CSV LEADS IMPORT ---
+    if (pathname === '/api/leads/import' && method === 'POST') {
+      const payload = await parseRequestBody(req);
+      const items = Array.isArray(payload) ? payload : (payload.leads || payload.items || payload.data || []);
+      const defaultRec = payload.defaultRecruiter || payload.default_recruiter || '';
+      const result = processBatchLeadImport(items, defaultRec);
+      const code = result.status === 'error' ? 400 : 200;
+      res.writeHead(code, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+      return;
+    }
+
     // --- LIVE PHONE CALL STOPWATCH EVENTS (Ringing / Started / Ended) ---
     if (pathname === '/api/calls/live' && (method === 'POST' || method === 'GET')) {
       const bodyData = method === 'POST' ? await parseRequestBody(req) : {};
@@ -1975,6 +2173,34 @@ const server = http.createServer(async (req, res) => {
       const code = result.status === 'error' ? 400 : 201;
       res.writeHead(code, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
+      return;
+    }
+
+    // --- CALLYZER WEBHOOK INTEGRATION (Auto-syncs Employee Calls, Talk Time & Recordings) ---
+    if ((pathname === '/api/callyzer/webhook' || pathname === '/api/webhook/callyzer' || pathname === '/api/sales/callyzer') && method === 'POST') {
+      const payload = await parseRequestBody(req);
+      const results = [];
+      const items = Array.isArray(payload) ? payload : [payload];
+      for (const emp of items) {
+        const empName = emp.employeeName || emp.name || '';
+        const empPhone = emp.employeeNumber || emp.phone || '';
+        const logs = Array.isArray(emp.logs) ? emp.logs : (emp.log ? [emp.log] : [emp]);
+        for (const log of logs) {
+          const res = processCallLog({
+            candidate_phone: log.number || log.clientNumber || log.phone || '',
+            candidate_name: log.name || '',
+            recruiter_name: empName,
+            recruiter_phone: empPhone,
+            call_direction: log.callType || log.type || 'outgoing',
+            duration_seconds: log.duration ?? log.call_duration ?? 0,
+            call_start_time: log.callTime || log.createdDate || '',
+            recording_url: log.recordingURL || log.recordingUrl || ''
+          });
+          results.push(res);
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'success', synced: results.length, details: results }));
       return;
     }
 
@@ -2085,13 +2311,13 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ status: 'error', message: err.message || 'Internal server error' }));
     }
   }
-});
+}
+
+const server = http.createServer(appHandler);
 
 // Global process resilience
 process.on('uncaughtException', err => console.error('[FATAL] Uncaught:', err));
 process.on('unhandledRejection', reason => console.error('[FATAL] Unhandled:', reason));
-if (process.stdin.isTTY === false) process.stdin.resume();
-setInterval(() => {}, 1000 * 60 * 60);
 
 // =========================================================================
 // PERMANENT ZERO-IP CLOUD CALL RELAY + LAN DISCOVERY
@@ -2207,28 +2433,36 @@ process.on('unhandledRejection', err => {
   console.error('[FATAL] Unhandled Rejection:', err);
 });
 
-server.on('error', err => {
-  console.error('[FATAL] Server HTTP Error:', err);
-});
+if (require.main === module) {
+  if (process.stdin.isTTY === false) process.stdin.resume();
+  setInterval(() => {}, 1000 * 60 * 60);
 
-server.listen(PORT, () => {
-  const ip = getLocalIp();
-  const host = os.hostname();
-  console.log('===============================================================');
-  console.log('🚀 Recruitment CRM Server Online (Local IST Clock Active)');
-  console.log(`🕒 Server Time:           ${formatDisplayDateTime(new Date())}`);
-  console.log(`🌐 Local Host PC:         http://localhost:${PORT}`);
-  console.log(`🌐 Fixed IP URL:          http://${ip}:${PORT}`);
-  console.log(`🌐 Hostname URL:          http://${host}:${PORT}`);
-  console.log(`🔗 Extension Webhook:     http://${ip}:${PORT}/api/webhook`);
-  console.log(`☁️  Permanent Cloud Sync:  https://ntfy.sh/${CLOUD_CALL_TOPIC}`);
-  console.log('===============================================================');
+  server.on('error', err => {
+    console.error('[FATAL] Server HTTP Error:', err);
+  });
 
-  connectCloudCallRelay();
-  broadcastCurrentIp();
-  setInterval(broadcastCurrentIp, 1000 * 60 * 5);
+  server.listen(PORT, () => {
+    const ip = getLocalIp();
+    const host = os.hostname();
+    console.log('===============================================================');
+    console.log('🚀 Recruitment CRM Server Online (Local IST Clock Active)');
+    console.log(`🕒 Server Time:           ${formatDisplayDateTime(new Date())}`);
+    console.log(`🌐 Local Host PC:         http://localhost:${PORT}`);
+    console.log(`🌐 Fixed IP URL:          http://${ip}:${PORT}`);
+    console.log(`🌐 Hostname URL:          http://${host}:${PORT}`);
+    console.log(`🔗 Extension Webhook:     http://${ip}:${PORT}/api/webhook`);
+    console.log(`☁️  Permanent Cloud Sync:  https://ntfy.sh/${CLOUD_CALL_TOPIC}`);
+    console.log('===============================================================');
 
-  // Initialize Isolated Sales Backend
-  salesBackend.initSalesBackend({ server, port: PORT });
-  console.log('💼 Sales CRM Workspace: http://localhost:' + PORT + '/sales');
-});
+    connectCloudCallRelay();
+    broadcastCurrentIp();
+    setInterval(broadcastCurrentIp, 1000 * 60 * 5);
+
+    // Initialize Isolated Sales Backend
+    salesBackend.initSalesBackend({ server, port: PORT });
+    console.log('💼 Sales CRM Workspace: http://localhost:' + PORT + '/sales');
+  });
+}
+
+module.exports = appHandler;
+module.exports.server = server;

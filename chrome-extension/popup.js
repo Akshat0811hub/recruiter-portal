@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(
     ["recruiterName", "webhookUrl", "workingServerUrl", "knownRecruiters"],
     (res) => {
-      recruiterInput.value = res.recruiterName || "Suhani Sisodiya";
+      recruiterInput.value = res.recruiterName || "Jinendra";
       const activeUrl = res.webhookUrl || res.workingServerUrl || DEFAULT_URL;
       webhookInput.value = activeUrl;
 
@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Save Preferences
   saveBtn.addEventListener("click", () => {
-    const recruiterName = recruiterInput.value.trim() || "Suhani Sisodiya";
+    const recruiterName = recruiterInput.value.trim() || "Jinendra";
     const webhookUrl = webhookInput.value.trim() || DEFAULT_URL;
 
     chrome.storage.local.set(

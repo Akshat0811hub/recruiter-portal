@@ -20,7 +20,8 @@ const url = require('url');
 const os = require('os');
 
 const PORT = Number(process.env.PORT) || 3000;
-const DATA_DIR = path.join(__dirname, 'data', 'sales');
+const IS_VERCEL = !!process.env.VERCEL;
+const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'data', 'sales') : path.join(__dirname, 'data', 'sales');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const RECORDINGS_DIR = path.join(DATA_DIR, 'recordings');
 const DROPZONE_DIR = path.join(DATA_DIR, 'recordings_dropzone');
@@ -35,6 +36,19 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
 if (!fs.existsSync(RECORDINGS_DIR)) fs.mkdirSync(RECORDINGS_DIR, { recursive: true });
 if (!fs.existsSync(DROPZONE_DIR)) fs.mkdirSync(DROPZONE_DIR, { recursive: true });
+
+if (IS_VERCEL) {
+  const seedDir = path.join(__dirname, 'data', 'sales');
+  if (fs.existsSync(seedDir)) {
+    ['users.json', 'leads.json', 'sales_team.json', 'call_logs.json', 'messages.json'].forEach(f => {
+      const src = path.join(seedDir, f);
+      const dst = path.join(DATA_DIR, f);
+      if (fs.existsSync(src) && !fs.existsSync(dst)) {
+        try { fs.copyFileSync(src, dst); } catch (_) {}
+      }
+    });
+  }
+}
 
 // =========================================================================
 // LOCAL CLOCK / IST TIME UTILITIES (Matches System Wall Clock Exactly)
@@ -227,9 +241,10 @@ function broadcastEvent(eventType, payload = {}) {
   }
 }
 
-setInterval(() => {
+const salesHeartbeatTimer = setInterval(() => {
   broadcastEvent('heartbeat', {});
 }, 15000);
+if (salesHeartbeatTimer.unref) salesHeartbeatTimer.unref();
 
 // =========================================================================
 // SALES TEAM IDENTITY & ATTRIBUTION ENGINE
@@ -701,6 +716,20 @@ function sanitizeString(val, maxLen = 500) {
   const s = String(val).trim();
   if (/^\[[a-z0-9_]+\]$/i.test(s) || /^\{[a-z0-9_]+\}$/i.test(s)) return '';
   return s.slice(0, maxLen);
+}
+
+function isGenericCandidateName(name) {
+  if (!name) return true;
+  const lower = name.toLowerCase().trim();
+  return (
+    lower === 'candidate' ||
+    lower === 'applicant' ||
+    lower === 'client' ||
+    lower === 'unknown' ||
+    lower === 'in' ||
+    lower.startsWith('candidate (') ||
+    lower.startsWith('client (')
+  );
 }
 
 function sanitizePhone(val) {
@@ -1196,14 +1225,14 @@ function processLeadIngest(payload) {
     callHistory: payload.callEntry ? [payload.callEntry] : [],
     lastCall: payload.callEntry || null,
     callDuration: payload.callEntry ? payload.callEntry.durationFormatted : '',
-    rawText: (isWhatsApp || isEmail) ? chatText : '',
+    rawText: (isWhatsApp || isEmail) ? chatText : sanitizeString(payload.notes || payload.recruiterNotes || payload.text || '', 5000),
     followUpNeeded: Boolean(
       (chatText && detectFollowUpSignal(chatText)) ||
       (payload.callEntry && (payload.callEntry.direction === 'missed' || payload.callEntry.direction === 'unanswered'))
     ),
     followUpDate: sanitizeString(payload.followUpDate || '', 40),
-    recruiterNotes: sanitizeString(payload.recruiterNotes || '', 2000),
-    status: 'New Lead'
+    recruiterNotes: sanitizeString(payload.recruiterNotes || payload.notes || '', 2000),
+    status: sanitizeString(payload.status || 'New Lead', 40)
   };
 
   if (isWhatsApp || isEmail) {
@@ -1226,6 +1255,125 @@ function processLeadIngest(payload) {
 
   broadcastEvent('lead_created', { leadId: newLead.id, candidateName: newLead.candidateName, channel: newLead.channel });
   return { status: 'success', action: 'created', lead: newLead };
+}
+
+// =========================================================================
+// BATCH EXCEL / CSV DEALS IMPORT (Auto-Mapping & Fast Ingestion)
+// =========================================================================
+
+function processBatchLeadImport(items, defaultSalesperson = '') {
+  if (!Array.isArray(items) || items.length === 0) {
+    return { status: 'error', message: 'No deal items provided in import array' };
+  }
+  const leads = getLeads();
+  let createdCount = 0;
+  let updatedCount = 0;
+  const currentTime = nowLocal();
+  const currentDay = todayKey();
+
+  for (const raw of items) {
+    if (!raw || typeof raw !== 'object') continue;
+
+    const clientPhone = sanitizePhone(raw.client_phone || raw.phone || raw.mobile || raw.contact || raw.candidate_phone || '');
+    const pKey = phoneKey10(clientPhone);
+    const clientEmail = sanitizeEmail(raw.client_email || raw.email || raw.candidate_email || '');
+
+    let clientName = sanitizeString(raw.client_name || raw.candidate_name || raw.name || raw.contact_name || '', 100);
+    if (!clientName && (raw.first_name || raw.last_name)) {
+      clientName = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim();
+    }
+    if (!clientName || isGenericCandidateName(clientName)) {
+      if (pKey) clientName = `Client (${pKey.slice(-4)})`;
+      else if (clientEmail) clientName = clientEmail.split('@')[0];
+      else clientName = 'Imported Client';
+    }
+
+    const companyName = sanitizeString(raw.company_name || raw.company || raw.current_ctc || raw.organization || raw.firm || '', 100);
+    const dealValue = sanitizeString(raw.deal_value || raw.expected_ctc || raw.budget || raw.commercials || '', 80);
+    const serviceRequirement = sanitizeString(raw.service_requirement || raw.service || raw.requirement || raw.skills || raw.notice_period || 'Corporate Services', 100);
+
+    // Salesperson mapping
+    const rawSales = raw.sales_person || raw.salesperson || raw.recruiter || raw.owner || raw.lead_owner || defaultSalesperson || '';
+    let salespersonName = rawSales ? canonicalSalesName(rawSales) : 'Jinendra';
+    if (!salespersonName || salespersonName === 'Jinendra') {
+      if (defaultSalesperson) salespersonName = canonicalSalesName(defaultSalesperson);
+    }
+
+    const status = sanitizeString(raw.status || raw.stage || 'New Lead', 40);
+    const channel = sanitizeString(raw.channel || raw.source || raw.lead_source || 'Excel Import', 50);
+    const notes = sanitizeString(raw.notes || raw.salespersonNotes || raw.remarks || raw.description || raw.text || '', 5000);
+    const category = sanitizeString(raw.category || 'Client / Employer Lead', 60);
+
+    // Deduplicate by Email -> Phone
+    let existingIndex = -1;
+    if (clientEmail) {
+      existingIndex = leads.findIndex(l => sanitizeEmail(l.email || '') === clientEmail);
+    }
+    if (existingIndex === -1 && pKey.length >= 10) {
+      existingIndex = leads.findIndex(l => phoneKey10(l.phone) === pKey);
+    }
+
+    if (existingIndex !== -1) {
+      const existing = leads[existingIndex];
+      if (!existing.phone && clientPhone) existing.phone = clientPhone;
+      if (!existing.email && clientEmail) existing.email = clientEmail;
+      if (isGenericCandidateName(existing.candidateName) && !isGenericCandidateName(clientName)) {
+        existing.candidateName = clientName;
+      }
+      if (companyName && (!existing.currentCtc || existing.currentCtc === '')) existing.currentCtc = companyName;
+      if (dealValue && !existing.expectedCtc) existing.expectedCtc = dealValue;
+      if (serviceRequirement && (!existing.noticePeriod || existing.noticePeriod === '')) existing.noticePeriod = serviceRequirement;
+      if (salespersonName && (!existing.recruiter || existing.recruiter === 'Jinendra')) {
+        existing.recruiter = salespersonName;
+      }
+      if (notes) {
+        existing.recruiterNotes = existing.recruiterNotes ? (existing.recruiterNotes + '\n' + notes) : notes;
+        existing.rawText = existing.rawText ? (existing.rawText + '\n' + notes) : notes;
+      }
+      existing.lastUpdated = currentTime;
+      if (!existing.activityDates.includes(currentDay)) {
+        existing.activityDates.push(currentDay);
+        existing.activityDates.sort();
+      }
+      updatedCount++;
+    } else {
+      const newDeal = {
+        id: 'DEAL-' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 90 + 10),
+        timestamp: currentTime,
+        lastUpdated: currentTime,
+        dateKey: currentDay,
+        activityDates: [currentDay],
+        recruiter: salespersonName,
+        channel: channel,
+        category: category,
+        candidateName: clientName,
+        phone: clientPhone,
+        email: clientEmail,
+        currentCtc: companyName,
+        expectedCtc: dealValue,
+        noticePeriod: serviceRequirement,
+        skills: serviceRequirement,
+        keywords: [],
+        whatsappTranscript: '',
+        emailTranscript: '',
+        messageHistory: [],
+        callHistory: [],
+        lastCall: null,
+        callDuration: '',
+        rawText: notes,
+        followUpNeeded: false,
+        followUpDate: '',
+        recruiterNotes: notes,
+        status: status
+      };
+      leads.unshift(newDeal);
+      createdCount++;
+    }
+  }
+
+  saveLeads(leads);
+  broadcastEvent('leads_imported', { total: items.length, created: createdCount, updated: updatedCount });
+  return { status: 'success', total: items.length, created: createdCount, updated: updatedCount };
 }
 
 // =========================================================================
@@ -1697,7 +1845,7 @@ async function transcribeRecording({ callId, recordingFile, mime }) {
 
 const activeCalls = new Map(); // salesKey -> { recruiterName, phone, candidateName, direction, status, ringStartMs, talkStartMs, startLocal, startDisplay, liveTranscript }
 
-setInterval(() => {
+const salesCleanupCallsTimer = setInterval(() => {
   const now = Date.now();
   let changed = false;
   for (const [key, item] of activeCalls.entries()) {
@@ -1709,6 +1857,7 @@ setInterval(() => {
   }
   if (changed) broadcastLiveCallsState();
 }, 60 * 1000);
+if (salesCleanupCallsTimer.unref) salesCleanupCallsTimer.unref();
 
 function getActiveCallsList() {
   const now = Date.now();
@@ -2143,7 +2292,7 @@ async function handleSalesRequest(req, res) {
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-User-Role, X-User-Name');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-User-Role, X-User-Name, X-Portal, *');
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
   if (method === 'OPTIONS') {
@@ -2204,7 +2353,7 @@ async function handleSalesRequest(req, res) {
     }
 
     // --- HEALTH / EXTENSION AUTO-DISCOVERY PING ---
-    if ((pathname === '/api/health' || pathname === '/api/ping') && method === 'GET') {
+    if ((pathname === '/api/health' || pathname === '/api/ping' || pathname.endsWith('/api/ping') || pathname.endsWith('/api/health')) && method === 'GET') {
       const ip = getLocalIp();
       const host = os.hostname();
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -2545,6 +2694,18 @@ async function handleSalesRequest(req, res) {
       return;
     }
 
+    // --- BATCH EXCEL / CSV DEALS IMPORT ---
+    if ((pathname === '/api/sales/leads/import' || pathname === '/api/leads/import') && method === 'POST') {
+      const payload = await parseRequestBody(req);
+      const items = Array.isArray(payload) ? payload : (payload.leads || payload.items || payload.data || []);
+      const defaultSales = payload.defaultSalesperson || payload.default_salesperson || payload.defaultRecruiter || '';
+      const result = processBatchLeadImport(items, defaultSales);
+      const code = result.status === 'error' ? 400 : 200;
+      res.writeHead(code, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+      return;
+    }
+
     // --- LIVE PHONE CALL STOPWATCH EVENTS ---
     if (pathname === '/api/calls/live' && (method === 'POST' || method === 'GET')) {
       const bodyData = method === 'POST' ? await parseRequestBody(req) : {};
@@ -2570,6 +2731,34 @@ async function handleSalesRequest(req, res) {
       const code = result.status === 'error' ? 400 : 201;
       res.writeHead(code, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
+      return;
+    }
+
+    // --- CALLYZER WEBHOOK INTEGRATION (Auto-syncs Sales Calls & Talk Time) ---
+    if ((pathname === '/api/callyzer/webhook' || pathname === '/api/webhook/callyzer' || pathname === '/api/sales/callyzer') && method === 'POST') {
+      const payload = await parseRequestBody(req);
+      const results = [];
+      const items = Array.isArray(payload) ? payload : [payload];
+      for (const emp of items) {
+        const empName = emp.employeeName || emp.name || '';
+        const empPhone = emp.employeeNumber || emp.phone || '';
+        const logs = Array.isArray(emp.logs) ? emp.logs : (emp.log ? [emp.log] : [emp]);
+        for (const log of logs) {
+          const res = processCallLog({
+            client_phone: log.number || log.clientNumber || log.phone || '',
+            client_name: log.name || '',
+            sales_person: empName,
+            salesperson_phone: empPhone,
+            call_direction: log.callType || log.type || 'outgoing',
+            duration_seconds: log.duration ?? log.call_duration ?? 0,
+            call_start_time: log.callTime || log.createdDate || '',
+            recording_url: log.recordingURL || log.recordingUrl || ''
+          });
+          results.push(res);
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'success', synced: results.length, details: results }));
       return;
     }
 
@@ -2818,8 +3007,6 @@ async function handleSalesRequest(req, res) {
 
 process.on('uncaughtException', err => console.error('[FATAL] Uncaught:', err));
 process.on('unhandledRejection', reason => console.error('[FATAL] Unhandled:', reason));
-if (process.stdin.isTTY === false) process.stdin.resume();
-setInterval(() => {}, 1000 * 60 * 60);
 
 // =========================================================================
 // PERMANENT ZERO-IP CLOUD CALL RELAY + LAN DISCOVERY
@@ -2940,7 +3127,8 @@ function scanRecordingsDropzone() {
     }
   } catch (_) {}
 }
-setInterval(scanRecordingsDropzone, 4000);
+const dropzoneTimer = setInterval(scanRecordingsDropzone, 4000);
+if (dropzoneTimer.unref) dropzoneTimer.unref();
 
 let cloudRelayConnecting = false;
 function connectCloudCallRelay() {

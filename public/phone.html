@@ -241,18 +241,20 @@
       <div class="card-sub">Select the recruiter assigned to this mobile device.</div>
       <label for="recruiterSelect">Assigned Recruiter</label>
       <select id="recruiterSelect" onchange="updateUrls()">
-        <option value="Suhani">Suhani</option>
-        <option value="Rahul">Rahul</option>
-        <option value="Pooja">Pooja</option>
-        <option value="Amit">Amit</option>
-        <option value="Neha">Neha</option>
-        <option value="Vikram">Vikram</option>
-        <option value="Anjali">Anjali</option>
-        <option value="Rohan">Rohan</option>
-        <option value="Kavita">Kavita</option>
-        <option value="Deepak">Deepak</option>
-        <option value="Kajal">Kajal</option>
+        <option value="Jinendra" selected>Jinendra</option>
         <option value="Suhani Sisodiya">Suhani Sisodiya</option>
+        <option value="Divanshi Gupta">Divanshi Gupta</option>
+        <option value="Sakshi Kaur">Sakshi Kaur</option>
+        <option value="Kamakshi Kaushik">Kamakshi Kaushik</option>
+        <option value="Manshi Agnihotri">Manshi Agnihotri</option>
+        <option value="Jyoti Shah">Jyoti Shah</option>
+        <option value="Pooja Singh">Pooja Singh</option>
+        <option value="Munisha Thakur">Munisha Thakur</option>
+        <option value="Neetu Sharma">Neetu Sharma</option>
+        <option value="Akshay Pandey">Akshay Pandey</option>
+        <option value="Akshita Nayal">Akshita Nayal</option>
+        <option value="Gunjan Sharma">Gunjan Sharma</option>
+        <option value="Shriparna Acharya">Shriparna Acharya</option>
       </select>
     </div>
 
@@ -342,13 +344,16 @@
         const recData = await recRes.json();
         if (recData && Array.isArray(recData.recruiters) && recData.recruiters.length) {
           const sel = document.getElementById('recruiterSelect');
+          const currentVal = sel.value || 'Jinendra';
           sel.innerHTML = '';
           recData.recruiters.forEach(r => {
             const opt = document.createElement('option');
             opt.value = r.name;
             opt.textContent = r.name;
+            if (r.name === currentVal) opt.selected = true;
             sel.appendChild(opt);
           });
+          if (!sel.value && sel.options.length) sel.selectedIndex = 0;
         }
       } catch (e) {
         document.getElementById('connStatus').innerHTML = '<i class="fa-solid fa-cloud"></i> Cloud Relay Active';
@@ -357,7 +362,7 @@
     }
 
     function updateUrls() {
-      const rec = document.getElementById('recruiterSelect').value || 'Suhani';
+      const rec = document.getElementById('recruiterSelect').value || 'Jinendra';
       document.getElementById('bodyRing').value = 'event=ringing&recruiter=' + rec + '&phone={call_number}&name={call_name}';
       document.getElementById('bodyStart').value = 'event=started&recruiter=' + rec + '&phone={call_number}&name={call_name}';
       document.getElementById('bodyEnd').value = 'event=ended&recruiter=' + rec + '&phone={call_number}&name={call_name}';
@@ -381,7 +386,7 @@
     }
 
     async function sendSimEvent(eventType) {
-      const rec = document.getElementById('recruiterSelect').value || 'Suhani';
+      const rec = document.getElementById('recruiterSelect').value || 'Jinendra';
       const phone = document.getElementById('testPhone').value.trim();
       if (!phone) {
         showToast('Please enter a phone number first');

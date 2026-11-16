@@ -64,7 +64,7 @@ function processCallWebhook(data) {
     callSheet.setFrozenRows(1);
   }
 
-  const recruiter = data.recruiter_name || data.recruiter || "Suhani";
+  const recruiter = data.recruiter_name || data.recruiter || "Unassigned";
   const phone = cleanPhone(data.candidate_phone || data.phone || data.number || "");
   const name = data.candidate_name || data.name || (phone ? "Candidate (" + phone.slice(-4) + ")" : "Unknown");
   const direction = (data.call_direction || data.call_type || "outgoing").toString();
@@ -95,7 +95,7 @@ function processIncomingLead(data) {
 
   const rawText = data.text || data.message || data.body || data.notes || "";
   const source = data.source || data.channel || "WhatsApp";
-  const recruiterName = data.recruiter_name || data.recruiter || "Suhani";
+  const recruiterName = data.recruiter_name || data.recruiter || "Unassigned";
   const candidatePhone = cleanPhone(data.candidate_phone || data.phone || "");
   const candidateEmail = data.candidate_email || data.email || extractEmailFromText(rawText);
   let candidateName = data.candidate_name || data.name || "";
