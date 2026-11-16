@@ -625,6 +625,9 @@ function parseFlexiblePayload(rawText) {
 }
 
 function parseRequestBodyBuffer(req) {
+  if (Buffer.isBuffer(req.body)) return Promise.resolve(req.body);
+  if (typeof req.body === 'string') return Promise.resolve(Buffer.from(req.body, 'utf-8'));
+  if (req.readableEnded) return Promise.resolve(Buffer.alloc(0));
   return new Promise((resolve, reject) => {
     const chunks = [];
     let totalSize = 0;
@@ -642,6 +645,22 @@ function parseRequestBodyBuffer(req) {
 }
 
 async function parseRequestBody(req) {
+  if (req.body !== undefined) {
+    if (typeof req.body === 'object' && req.body !== null && !Buffer.isBuffer(req.body)) {
+      return req.body;
+    }
+    if (Buffer.isBuffer(req.body)) {
+      const raw = req.body.toString('utf-8').trim();
+      return raw ? parseFlexiblePayload(raw) : {};
+    }
+    if (typeof req.body === 'string') {
+      const raw = req.body.trim();
+      return raw ? parseFlexiblePayload(raw) : {};
+    }
+  }
+  if (req.readableEnded) {
+    return {};
+  }
   const buf = await parseRequestBodyBuffer(req);
   const raw = buf.toString('utf-8').trim();
   if (!raw) return {};
@@ -2380,8 +2399,13 @@ async function handleSalesRequest(req, res) {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive'
+        'Connection': IS_VERCEL ? 'close' : 'keep-alive'
       });
+      if (IS_VERCEL) {
+        res.write(`retry: 30000\ndata: ${JSON.stringify({ type: 'connected', serverTime: nowLocal(), todayKey: todayKey(), activeCalls: getActiveCallsList() })}\n\n`);
+        res.end();
+        return;
+      }
       res.write(`data: ${JSON.stringify({ type: 'connected', serverTime: nowLocal(), todayKey: todayKey(), activeCalls: getActiveCallsList() })}\n\n`);
       sseClients.add(res);
       req.on('close', () => sseClients.delete(res));
