@@ -3881,9 +3881,77 @@
         const data = await res.json();
         allLeads = data.leads || [];
         leadDateCounts = data.dateCounts || {};
+
+        // Auto-fallback to All Dates on initial load if Today has 0 deals but historical deals exist
+        if (isFollowingToday && allLeads.length === 0 && Object.keys(leadDateCounts).length > 0 && !window.__autoFallbackAllDates) {
+          window.__autoFallbackAllDates = true;
+          selectedDate = 'all';
+          isFollowingToday = false;
+          updateDayBarUI();
+          refreshAllData();
+          return;
+        }
+
+        // Re-hydrate locally saved CSV/manual deals if Vercel container restarted
+        if (!window.__rehydratingCloudLeads) {
+          await rehydrateCloudLeadsIfNeeded('/api/sales/leads/import', 'orbit_sales_cloud_leads_v1', 'clientName');
+        }
+
         updateLeadCategoryStats(allLeads);
         applyLeadFilters();
       } catch (err) {}
+    }
+
+    function saveCloudMirrorItems(storageKey, newItems) {
+      try {
+        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const map = new Map();
+        for (const item of [...existing, ...newItems]) {
+          const k = (item.phone || '').replace(/\D/g, '').slice(-10) || (item.email || '').toLowerCase() || (item.clientName || item.name || '').toLowerCase();
+          if (k) map.set(k, item);
+        }
+        localStorage.setItem(storageKey, JSON.stringify([...map.values()].slice(-500)));
+      } catch (_) {}
+    }
+
+    async function rehydrateCloudLeadsIfNeeded(endpoint, storageKey, nameField) {
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return;
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        if (!Array.isArray(saved) || saved.length === 0) return;
+        const existingKeys = new Set();
+        allLeads.forEach(l => {
+          const p = String(l.phone || '').replace(/\D/g, '').slice(-10);
+          const e = String(l.email || '').toLowerCase().trim();
+          const n = String(l[nameField] || l.clientName || l.candidateName || '').toLowerCase().trim();
+          if (p.length >= 8) existingKeys.add(p);
+          if (e) existingKeys.add(e);
+          if (n) existingKeys.add(n);
+        });
+        const missing = saved.filter(item => {
+          const p = String(item.phone || '').replace(/\D/g, '').slice(-10);
+          const e = String(item.email || '').toLowerCase().trim();
+          const n = String(item.clientName || item.name || '').toLowerCase().trim();
+          return !(p.length >= 8 && existingKeys.has(p)) && !(e && existingKeys.has(e)) && !(n && existingKeys.has(n));
+        });
+        if (missing.length > 0) {
+          window.__rehydratingCloudLeads = true;
+          await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: missing })
+          });
+          const res2 = await fetch('/api/sales/leads?user_role=' + encodeURIComponent(currentUser.role) + '&user_name=' + encodeURIComponent(currentUser.name) + '&date=' + encodeURIComponent(selectedDate), {
+            headers: { 'X-User-Role': currentUser.role, 'X-User-Name': currentUser.name }
+          });
+          const d2 = await res2.json();
+          allLeads = d2.leads || allLeads;
+          leadDateCounts = d2.dateCounts || leadDateCounts;
+        }
+      } catch (_) {
+      } finally {
+        window.__rehydratingCloudLeads = false;
+      }
     }
 
     function updateLeadCategoryStats(leads) {
@@ -4509,6 +4577,16 @@
         });
         const data = await res.json();
         if (data.status === 'success' || data.status === 'ok') {
+          saveCloudMirrorItems('orbit_sales_cloud_leads_v1', [{
+            clientName: payload.clientName,
+            company: payload.companyName,
+            phone: payload.phone,
+            email: payload.email,
+            service: payload.skills,
+            dealValue: payload.expectedCtc,
+            salesperson: payload.salesperson,
+            notes: payload.recruiterNotes
+          }]);
           showToast('✓ Client deal saved successfully!');
           closeModal('manualDealModal');
           refreshAllData();
@@ -4770,6 +4848,7 @@
         });
         const data = await res.json();
         if (data.status === 'success') {
+          saveCloudMirrorItems('orbit_sales_cloud_leads_v1', items);
           showToast(`✓ Imported successfully! ${data.created} new deals created, ${data.updated} updated.`);
           closeModal('importModal');
           refreshAllData();

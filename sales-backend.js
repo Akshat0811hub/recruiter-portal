@@ -108,10 +108,15 @@ function formatShortTime(dateInput) {
   return `${pad2(hours)}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())} ${ampm}`;
 }
 
+function nowISTDate() {
+  const now = new Date();
+  const offsetDiffMin = 330 + now.getTimezoneOffset();
+  return offsetDiffMin === 0 ? now : new Date(now.getTime() + offsetDiffMin * 60000);
+}
+
 function getLocalDateKey(dateInput) {
   if (!dateInput) {
-    const now = new Date();
-    return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+    return todayKey();
   }
   const str = String(dateInput).trim();
   const direct = str.match(/^(\d{4}-\d{2}-\d{2})/);
@@ -123,11 +128,12 @@ function getLocalDateKey(dateInput) {
 }
 
 function nowLocal() {
-  return formatLocalTimestamp(new Date());
+  return formatLocalTimestamp(nowISTDate());
 }
 
 function todayKey() {
-  return getLocalDateKey(new Date());
+  const ist = nowISTDate();
+  return `${ist.getFullYear()}-${pad2(ist.getMonth() + 1)}-${pad2(ist.getDate())}`;
 }
 
 function parseDurationToSeconds(val) {
@@ -2598,6 +2604,7 @@ async function handleSalesRequest(req, res) {
 
     // --- GET CALL LOGS (Role-Based + Day-Wise Filtering) ---
     if (pathname === '/api/call-logs' && method === 'GET') {
+      if (IS_VERCEL) await syncCloudCallRelayOnce();
       const userRole = sanitizeString(req.headers['x-user-role'] || parsedUrl.query.user_role || '', 30).toLowerCase();
       const userName = sanitizeString(req.headers['x-user-name'] || parsedUrl.query.user_name || '', 100).toLowerCase();
       const queryRec = sanitizeString(parsedUrl.query.recruiter || parsedUrl.query.salesperson || '', 100).toLowerCase();
@@ -3225,6 +3232,46 @@ function connectCloudCallRelay() {
   req.on('error', () => {
     cloudRelayConnecting = false;
     setTimeout(connectCloudCallRelay, 5000);
+  });
+}
+
+let lastCloudPollMs = 0;
+function syncCloudCallRelayOnce() {
+  if (!IS_VERCEL) return Promise.resolve();
+  const now = Date.now();
+  if (now - lastCloudPollMs < 15000) return Promise.resolve();
+  lastCloudPollMs = now;
+  return new Promise(resolve => {
+    const cursor = loadCloudCursor();
+    if (cursor.lastId) processedCloudIds.add(cursor.lastId);
+    const sinceParam = cursor.lastId ? encodeURIComponent(cursor.lastId) : '24h';
+    const pollUrl = `https://ntfy.sh/${CLOUD_CALL_TOPIC}/json?since=${sinceParam}&poll=1`;
+    const req = https.get(pollUrl, res => {
+      if (res.statusCode !== 200) { res.resume(); return resolve(); }
+      let raw = '';
+      res.on('data', c => { raw += c.toString('utf8'); });
+      res.on('end', () => {
+        for (const line of raw.split('\n')) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const obj = JSON.parse(trimmed);
+            if (obj.event === 'message' && obj.message && obj.id && !processedCloudIds.has(obj.id)) {
+              processedCloudIds.add(obj.id);
+              saveCloudCursor(obj.id, obj.time);
+              const parsed = parseFlexiblePayload(obj.message);
+              if (parsed && (parsed.event || parsed.phone || parsed.candidate_phone)) {
+                const msgMs = obj.time ? obj.time * 1000 : Date.now();
+                processLiveCallEvent(parsed, msgMs);
+              }
+            }
+          } catch (_) {}
+        }
+        resolve();
+      });
+    });
+    req.setTimeout(2500, () => { req.destroy(); resolve(); });
+    req.on('error', () => resolve());
   });
 }
 
